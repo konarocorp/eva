@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../dark.css">
+<script src="../javascript.js"></script>
+
+<link rel="stylesheet" href="../highlightjs/monokai.min.css">
+<script src="../highlightjs/highlight.min.js"></script>
+<script defer>hljs.highlightAll()</script>
+
+<title>Eva</title>
+</head>
+<body>
+
+
+
+
+<article>
+<section>
+<h3>What is Eva?</h3>
+
+<p>If you have ever written a simple Bash script, you probably noticed how easy it looks at first. It feels almost like typing in a terminal. One command after another, with some control flow. The code is simple and direct.</p>
+
+<p>Then you start to automate some tasks with scripts, so you do not have to type them every time. Little by little the code becomes more complex, and at some point you start to ask yourself: is Bash enough for what I need, or should I choose another language?</p>
+
+<p>When a Bash script has hundreds of lines, full of defensive checks and calls to external commands, some of them installed only for that script, it is no longer a small automation script. That is usually the moment to move to another language.</p>
+
+<p>Python, like Bash, is available on almost every Linux distribution, but it also has a very strong standard library. High portability, batteries included, clean syntax.</p>
+
+<p>For this reason I decided to write this scripting toolbox for Linux systems: a collection of opinionated functions and classes, used as a layer of syntactic sugar.</p>
+
+<p>Everything in a single file. Zero dependencies. The Python standard library is enough.</p>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h3>What is M?</h3>
+
+<p>Before explaining what <var>M</var> is, it is important to say why it is documented at all. In fact, it is not meant to be a public feature. But this variable is so special, and so widely used inside Eva’s source code, that it needs to be explained.</p>
+
+<p>Its purpose is very simple: behind this variable there is a dynamic module loader, so modules can be accessed as a hierarchical namespace. Let us see an example. Suppose we want to use the <var>time</var> module. In Python you write <var>import time</var> at the start of the code and then, for example, <var>time.sleep(1)</var> anywhere. With <var>M</var>, you just write <var>M.time.sleep(1)</var>, and that is all.</p>
+
+<p>Many people will ask… why? The answer is also simple: because it feels more comfortable and cleaner to write code this way. The global namespace is not filled with names that may collide with others, and modules are loaded only when they are needed.</p>
+
+<p>Do not use this in your own code. Normal module imports are good and reliable.</p>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<ul>
+    <li><a href="#cst">constants</a>
+        <ul>
+            <li><a href="#cst-DAY">DAY</a>,
+            <a href="#cst-HOUR">HOUR</a>,
+            <a href="#cst-MINUTE">MINUTE</a>,
+            <a href="#cst-SECOND">SECOND</a>,
+            <a href="#cst-WEEK">WEEK</a></li>
+
+            <li><a href="#cst-LoggerTimestamp">LoggerTimestamp</a>:
+            <a href="#cst-LoggerTimestamp-COMPACT">COMPACT</a>,
+            <a href="#cst-LoggerTimestamp-DATE">DATE</a>,
+            <a href="#cst-LoggerTimestamp-FULL">FULL</a>,
+            <a href="#cst-LoggerTimestamp-HUMAN">HUMAN</a>,
+            <a href="#cst-LoggerTimestamp-ISO">ISO</a>,
+            <a href="#cst-LoggerTimestamp-SHORT">SHORT</a>,
+            <a href="#cst-LoggerTimestamp-TIME">TIME</a></li>
+
+            <li><a href="#cst-LoggerType">LoggerType</a>:
+            <a href="#cst-LoggerType-ALERT">ALERT</a>,
+            <a href="#cst-LoggerType-DEBUG">DEBUG</a>,
+            <a href="#cst-LoggerType-ERROR">ERROR</a>,
+            <a href="#cst-LoggerType-FATAL">FATAL</a>,
+            <a href="#cst-LoggerType-INFO">INFO</a>,
+            <a href="#cst-LoggerType-OKAY">OKAY</a></li>
+        </ul>
+    </li>
+
+    <li><a href="#fnc">functions</a>
+        <ul>
+            <li><a href="#fnc-append_file">append_file</a>,
+            <a href="#fnc-read_binary_file">read_binary_file</a>,
+            <a href="#fnc-read_text_file">read_text_file</a>,
+            <a href="#fnc-write_file">write_file</a></li>
+
+            <li><a href="#fnc-check_internet">check_internet</a>,
+            <a href="#fnc-check_internet_ipv4">check_internet_ipv4</a>,
+            <a href="#fnc-check_internet_ipv6">check_internet_ipv6</a></li>
+
+            <li><a href="#fnc-clamp">clamp</a></li>
+
+            <li><a href="#fnc-dir_is_empty">dir_is_empty</a></li>
+
+            <li><a href="#fnc-get_interfaces">get_interfaces</a></li>
+
+            <li><a href="#fnc-get_timestamp">get_timestamp</a></li>
+
+            <li><a href="#fnc-ip_in_network">ip_in_network</a></li>
+
+            <li><a href="#fnc-is_ip">is_ip</a>,
+            <a href="#fnc-is_ipv4">is_ipv4</a>,
+            <a href="#fnc-is_ipv6">is_ipv6</a></li>
+
+            <li><a href="#fnc-is_pid">is_pid</a></li>
+
+            <li><a href="#fnc-noop">noop</a></li>
+
+            <li><a href="#fnc-normalize_float">normalize_float</a>,
+            <a href="#fnc-normalize_integer">normalize_integer</a></li>
+
+            <li><a href="#fnc-normalize_ip">normalize_ip</a></li>
+
+            <li><a href="#fnc-normalize_path">normalize_path</a></li>
+
+            <li><a href="#fnc-normalize_text">normalize_text</a></li>
+
+            <li><a href="#fnc-path_is_dir">path_is_dir</a>,
+            <a href="#fnc-path_is_file">path_is_file</a>,
+            <a href="#fnc-path_is_link">path_is_link</a></li>
+
+            <li><a href="#fnc-ping_ipv4">ping_ipv4</a>,
+            <a href="#fnc-ping_ipv6">ping_ipv6</a></li>
+
+            <li><a href="#fnc-printe">printe</a>,
+            <a href="#fnc-printo">printo</a></li>
+
+            <li><a href="#fnc-randomize_ip">randomize_ip</a></li>
+
+            <li><a href="#fnc-resolve_dns">resolve_dns</a>,
+            <a href="#fnc-resolve_dns_ipv4">resolve_dns_ipv4</a>,
+            <a href="#fnc-resolve_dns_ipv6">resolve_dns_ipv6</a></li>
+
+            <li><a href="#fnc-run">run</a></li>
+
+            <li><a href="#fnc-user_is_admin">user_is_admin</a></li>
+        </ul>
+    </li>
+
+    <li><a href="#cls">classes</a>
+        <ul>
+            <li><a href="#cls-Chrono">Chrono</a>:
+            <a href="#prp-Chrono-delta">delta</a>,
+            <a href="#prp-Chrono-expired">expired</a>,
+            <a href="#prp-Chrono-precision">precision</a>,
+            <a href="#prp-Chrono-remaining">remaining</a>,
+            <a href="#mth-Chrono-reset">reset</a>,
+            <a href="#prp-Chrono-timeout">timeout</a></li>
+
+            <li><a href="#cls-Latch">Latch</a>:
+            <a href="#prp-Latch-path">path</a>,
+            <a href="#prp-Latch-pid">pid</a>,
+            <a href="#prp-Latch-socket">socket</a>,
+            <a href="#prp-Latch-status">status</a>,
+            <a href="#mth-Latch-off">off</a>,
+            <a href="#mth-Latch-on">on</a></li>
+
+            <li><a href="#cls-Logger">Logger</a>:
+            <a href="#prp-Logger-mute">mute</a>,
+            <a href="#prp-Logger-path">path</a>,
+            <a href="#prp-Logger-stderr">stderr</a>,
+            <a href="#prp-Logger-timestamp">timestamp</a>,
+            <a href="#prp-Logger-type">type</a></li>
+
+            <li><a href="#cls-Reader">Reader</a>:
+            <a href="#mth-Reader-bye">bye</a>,
+            <a href="#mth-Reader-off">off</a>,
+            <a href="#mth-Reader-on">on</a>,
+            <a href="#mth-Reader-poll">poll</a>,
+            <a href="#prp-Reader-status">status</a>,
+            <a href="#prp-Reader-wait">wait</a></li>
+
+            <li><a href="#cls-Terminal">Terminal</a>:
+            <a href="#prp-Terminal-brush">brush</a>,
+            <a href="#mth-Terminal-clear_line">clear_line</a>,
+            <a href="#mth-Terminal-clear_screen">clear_screen</a>,
+            <a href="#mth-Terminal-clear_scrollback">clear_scrollback</a>,
+            <a href="#mth-Terminal-disable_alt_screen">disable_alt_screen</a>,
+            <a href="#mth-Terminal-disable_alt_scroll">disable_alt_scroll</a>,
+            <a href="#mth-Terminal-disable_cursor">disable_cursor</a>,
+            <a href="#mth-Terminal-enable_alt_screen">enable_alt_screen</a>,
+            <a href="#mth-Terminal-enable_alt_scroll">enable_alt_scroll</a>,
+            <a href="#mth-Terminal-enable_cursor">enable_cursor</a>,
+            <a href="#prp-Terminal-height">height</a>,
+            <a href="#mth-Terminal-move_by">move_by</a>,
+            <a href="#mth-Terminal-move_home">move_home</a>,
+            <a href="#mth-Terminal-move_to">move_to</a>,
+            <a href="#prp-Terminal-mute">mute</a>,
+            <a href="#mth-Terminal-reset_terminal">reset_terminal</a>,
+            <a href="#mth-Terminal-restore_cursor">restore_cursor</a>,
+            <a href="#mth-Terminal-save_cursor">save_cursor</a>,
+            <a href="#prp-Terminal-stderr">stderr</a>,
+            <a href="#prp-Terminal-stream">stream</a>,
+            <a href="#prp-Terminal-width">width</a>,
+            <a href="#mth-Terminal-write">write</a></li>
+
+            <li><a href="#cls-Spinner">Spinner</a>:
+            <a href="#mth-Spinner-bye">bye</a>,
+            <a href="#prp-Spinner-colors">colors</a>,
+            <a href="#prp-Spinner-current">current</a>,
+            <a href="#mth-Spinner-hide">hide</a>,
+            <a href="#prp-Spinner-glyphs">glyphs</a>,
+            <a href="#prp-Spinner-message">message</a>,
+            <a href="#mth-Spinner-off">off</a>,
+            <a href="#mth-Spinner-on">on</a>,
+            <a href="#prp-Spinner-status">status</a>,
+            <a href="#prp-Spinner-stderr">stderr</a>,
+            <a href="#prp-Spinner-tempo">tempo</a></li>
+        </ul>
+    </li>
+</ul>
+
+</section>
+</article>
+
+
+
+
+<h2 id="cst">constants</h2>
+
+
+
+
+<article>
+<section>
+<h4 id="cst-DAY">DAY = 86400.0</h4>
+<h4 id="cst-HOUR">HOUR = 3600.0</h4>
+<h4 id="cst-MINUTE">MINUTE = 60.0</h4>
+<h4 id="cst-SECOND">SECOND = 1.0</h4>
+<h4 id="cst-WEEK">WEEK = 604800.0</h4>
+<p>They represent units of time expressed in seconds. Using them makes the code clearer and avoids magic numbers.</p>
+
+<p>They are <var>float</var> because the second is the smallest time unit used in this project. Smaller values can be expressed as fractions of a second.</p>
+
+<pre><code>
+import eva, time
+
+print('hello world!')
+
+time.sleep(eva.SECOND / 2)
+
+print('goodbye!')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article id="cst-LoggerTimestamp">
+<section>
+<h4 id="cst-LoggerTimestamp-COMPACT">LoggerTimestamp.COMPACT</h4>
+<h4 id="cst-LoggerTimestamp-DATE">LoggerTimestamp.DATE</h4>
+<h4 id="cst-LoggerTimestamp-FULL">LoggerTimestamp.FULL</h4>
+<h4 id="cst-LoggerTimestamp-HUMAN">LoggerTimestamp.HUMAN</h4>
+<h4 id="cst-LoggerTimestamp-ISO">LoggerTimestamp.ISO</h4>
+<h4 id="cst-LoggerTimestamp-SHORT">LoggerTimestamp.SHORT</h4>
+<h4 id="cst-LoggerTimestamp-TIME">LoggerTimestamp.TIME</h4>
+
+<p>This enum defines the valid values for the <var><a href="#prp-Logger-timestamp">Logger.timestamp</a></var> property.</p>
+
+<p>Each enum value matches a property of the object returned by the <var><a href="#fnc-get_timestamp">get_timestamp</a></var> function.</p>
+
+<p>Not all properties of that object are included in the enum. Only the most useful ones are defined here.</p>
+
+<pre><code>
+import eva
+
+info = eva.Info(timestamp=eva.LoggerTimestamp.SHORT)
+info('hello world!')
+
+alert = eva.Alert()
+alert.timestamp = eva.LoggerTimestamp.TIME
+alert('goodbye!')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article id="cst-LoggerType">
+<section>
+<h4 id="cst-LoggerType-ALERT">LoggerType.ALERT</h4>
+<h4 id="cst-LoggerType-DEBUG">LoggerType.DEBUG</h4>
+<h4 id="cst-LoggerType-ERROR">LoggerType.ERROR</h4>
+<h4 id="cst-LoggerType-FATAL">LoggerType.FATAL</h4>
+<h4 id="cst-LoggerType-INFO">LoggerType.INFO</h4>
+<h4 id="cst-LoggerType-OKAY">LoggerType.OKAY</h4>
+
+<p>This enum defines the valid types used to create a <var><a href="#cls-Logger">Logger</a></var> instance.</p>
+
+<p>Each type has its own fixed name and color to make it easy to recognize in the terminal.</p>
+
+<p>Each type also has a default output. For <var>ALERT</var>, <var>INFO</var> and <var>OKAY</var> the output is standard output. For <var>DEBUG</var>, <var>ERROR</var> and <var>FATAL</var> the output is standard error.</p>
+
+<p>The output of a <var><a href="#cls-Logger">Logger</a></var> instance can be changed, but its name and color are fixed.</p>
+
+<pre><code>
+import eva
+
+logger = eva.Logger(eva.LoggerType.OKAY)
+
+print(logger.stderr)
+print(logger.type)
+
+logger.stderr = not logger.stderr
+
+print(logger.stderr)
+print(logger.type)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<h2 id="fnc">functions</h2>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-append_file">append_file(path, content, /, *, eol=False, lock=False)</h4>
+<h4 id="fnc-read_binary_file">read_binary_file(path, /, *, lock=False)</h4>
+<h4 id="fnc-read_text_file">read_text_file(path, /, *, lock=False)</h4>
+<h4 id="fnc-write_file">write_file(path, content, /, *, lock=False)</h4>
+
+<p>They allow reading from and writing to files.</p>
+
+<p>The <var>path</var> parameter is the path of the file to read or write.</p>
+
+<p>The <var>append_file</var> and <var>write_file</var> functions are used to write data. Both create the file if it does not exist. The <var>content</var> value must be <var>bytes</var> or <var>str</var>.</p>
+
+<p>The <var>append_file</var> function adds new content to the file, with a newline at the end if the <var>eol</var> parameter is <var>True</var>.</p>
+
+<p>The <var>write_file</var> function fully replaces the previous content.</p>
+
+<p>The <var>read_binary_file</var> and <var>read_text_file</var> functions are used to read data. The first returns the content as a <var>bytes</var> object. The second returns it as <var>str</var> and assumes UTF-8 encoding with <var>replace</var> as the error handler.</p>
+
+<p>In multithreaded or multiprocess programs, concurrent reads or writes on the same file may corrupt its contents. To avoid this, the <var>lock</var> parameter can be set to <var>True</var>, which applies an operating-system-level lock (<var>fcntl.flock</var>) before the read or write operation.</p>
+
+<p>No exceptions are raised if an error happens during a read or write. Instead, the functions return <var>False</var> as a warning. On success, read functions return the content and write functions return <var>True</var>.</p>
+
+<pre><code>
+import eva
+
+path = '/tmp/file-does-not-exist.txt'
+
+print(eva.read_text_file(path))
+
+path = '/tmp/file.txt'
+
+eva.write_file(path, b'hello ')
+
+eva.append_file(path, 'world!', eol=True)
+
+print(eva.read_text_file(path))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-check_internet">check_internet(*, ipv4=True, ipv6=True, retries=None, timeout=None)</h4>
+<h4 id="fnc-check_internet_ipv4">check_internet_ipv4(*, retries=None, timeout=None)</h4>
+<h4 id="fnc-check_internet_ipv6">check_internet_ipv6(*, retries=None, timeout=None)</h4>
+
+<p>They check if there is Internet connectivity.</p>
+
+<p>To do this, they send ping requests to well-known DNS servers. These servers are stored as a fixed list of IP addresses and cannot be changed. The list includes both IPv4 and IPv6 addresses. The order is chosen at random on each run to avoid bias.</p>
+
+<p>The <var>ipv4</var> and <var>ipv6</var> parameters determine which protocols are tested. Setting a parameter to <var>True</var> enables the protocol, while <var>False</var> skips it.</p>
+
+<p>The <var>retries</var> parameter sets the maximum number of ping attempts per protocol before connectivity is considered missing. The default is one attempt. Each attempt uses a different IP address. The IP list is walked in order until a ping reply is received. If none is received, it starts again from the first IP until all attempts are used.</p>
+
+<p>The <var>timeout</var> parameter sets the maximum time, in seconds, to wait for each ping reply. The default is one second. See the documentation of <var><a href="#fnc-ping_ipv4">ping_ipv4</a></var> and <var><a href="#fnc-ping_ipv6">ping_ipv6</a></var> for more details about this parameter.</p>
+
+<p>Values such as zero retries, a zero second timeout, or both protocols disabled are allowed.</p>
+
+<p>The <var>check_internet_ipv4</var> and <var>check_internet_ipv6</var> functions are simple wrappers with the protocol parameters fixed.</p>
+
+<p><var>True</var> is returned only if at least one ping is successful for each enabled protocol. Otherwise the check fails and <var>False</var> is returned. It also fails if both protocols are disabled or if the number of retries is zero.</p>
+
+<pre><code>
+import eva
+
+both = eva.check_internet()
+ipv4 = eva.check_internet_ipv4(retries=3)
+ipv6 = eva.check_internet_ipv6(timeout=eva.SECOND / 2)
+
+print(both, ipv4, ipv6)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-clamp">clamp(value, /, minimum, maximum)</h4>
+
+<p>It limits <var>value</var> to the range defined by <var>minimum</var> and <var>maximum</var>, making sure it does not go outside these bounds.</p>
+
+<p>In most cases <var>value</var>, <var>minimum</var>, and <var>maximum</var> are numbers, usually <var>float</var> or <var>int</var>, but this is not required. They only need to be comparable with each other.</p>
+
+<p>A <var>ValueError</var> exception is raised if <var>minimum</var> is greater than <var>maximum</var>.</p>
+
+<p>If the value is already inside the range, it is returned as is. Otherwise, the nearest limit is returned.</p>
+
+<pre><code>
+import eva, ipaddress, math
+
+print(eva.clamp(1, minimum=12, maximum=123))
+
+print(eva.clamp('foo', minimum='bar', maximum='quux'))
+
+print(eva.clamp(math.inf, minimum=1234, maximum=math.inf))
+
+address = ipaddress.ip_address('192.0.2.123')
+minimum = ipaddress.ip_address('192.0.2.20')
+maximum = ipaddress.ip_address('192.0.2.30')
+
+print(eva.clamp(address, minimum, maximum))
+
+print(eva.clamp(str(address), str(minimum), str(maximum)))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-dir_is_empty">dir_is_empty(path, /)</h4>
+
+<p>It checks whether the <var>path</var> parameter is a directory (or a symbolic link to one) and is empty.</p>
+
+<p>It returns <var>True</var> if the path is a directory and it could be confirmed to be empty. It returns <var>False</var> in all other cases (not empty, not a directory, does not exist, or could not be checked).</p>
+
+<pre><code>
+import eva
+
+path = '/tmp/dir-does-not-exist'
+
+print(eva.dir_is_empty(path))
+
+path = '/tmp/dir-exists-and-is-empty'
+
+print(eva.dir_is_empty(path))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-get_interfaces">get_interfaces(*, down=True, loopback=True, up=True)</h4>
+
+<p>It gets the network interfaces that are currently available on the system.</p>
+
+<p>By default, all interfaces are returned, but some can be excluded using the parameters. Setting <var>down</var> to <var>False</var> excludes inactive interfaces, <var>loopback</var> excludes the loopback interface, and <var>up</var> excludes active ones.</p>
+
+<p>It is allowed to exclude both active and inactive interfaces at the same time.</p>
+
+<p>It returns a tuple with the interface names. The tuple may be empty.</p>
+
+<pre><code>
+import eva
+
+interfaces = eva.get_interfaces(loopback=False)
+
+for name in interfaces:
+    print('name: ', name)
+
+print('total: ', len(interfaces))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-get_timestamp">get_timestamp(epoch=None, /, *, utc=False)</h4>
+
+<p>It returns an object with several formatted representations of a given moment in time.</p>
+
+<p>The <var>epoch</var> parameter specifies the moment to format. It must be a <var>float</var> representing the number of seconds since Unix Time, so microseconds can be included. If this parameter is not provided, the current system time is used.</p>
+
+<p>The <var>utc</var> parameter is a boolean. When it is <var>True</var>, all representations are formatted using Coordinated Universal Time. By default, the system local time zone is used.</p>
+
+<p>The returned value is a <var>SimpleNamespace</var> object. Its properties contain the formatted representations. Except for <var>epoch</var>, which is a <var>float</var> with seconds and microseconds, all values are <var>str</var> based on the format <var>"%Y/%m/%d-%H:%M:%S.%f%z"</var>. The <var>full</var> property is the complete timestamp in that format, <var>human</var> is the same but without microseconds, <var>compact</var> uses a two-digit year and removes microseconds and all date and time separators, <var>short</var> also uses a two-digit year but only removes the time zone and the microseconds, <var>iso</var> is the extended ISO 8601 format with microseconds, <var>date</var> contains only the date part, and <var>time</var> contains only the time part. The other properties are the individual components (<var>year</var>, <var>month</var>, <var>day</var>, <var>hour</var>, <var>minute</var>, <var>second</var>, <var>microsecond</var>, and <var>timezone</var>).</p>
+
+<pre><code>
+import eva
+
+now = eva.get_timestamp()
+
+for key, value in vars(now).items():
+    print(f'{key}: "{value}"')
+
+print()
+
+utc = eva.get_timestamp(now.epoch, utc=True)
+
+for key, value in vars(utc).items():
+    print(f'{key}: "{value}"')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-ip_in_network">ip_in_network(address, network, /)</h4>
+
+<p>It checks whether an IP address is inside a network prefix.</p>
+
+<p>The <var>address</var> parameter is the IP address to check. It can also be given as a CIDR prefix, in which case the host address is extracted from it.</p>
+
+<p>The <var>network</var> parameter is the network to check against. It should be given as a CIDR prefix. If it is just an IP address, then a "/32" prefix is assumed for IPv4 and "/128" for IPv6.</p>
+
+<p>A <var>ValueError</var> exception is raised if the IP or the network range is not valid.</p>
+
+<p>It returns <var>True</var> if the IP belongs to that network, or <var>False</var> otherwise.</p>
+
+<pre><code>
+import eva
+
+address = '192.0.2.123'
+network = '192.0.2.0/24'
+
+print(eva.ip_in_network(address, network))
+
+address, network = network, address
+
+print(eva.ip_in_network(address, network))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-is_ip">is_ip(address, /, *, host=False, ipv4=True, ipv6=True, network=False)</h4>
+<h4 id="fnc-is_ipv4">is_ipv4(address, /, *, host=False, network=False)</h4>
+<h4 id="fnc-is_ipv6">is_ipv6(address, /, *, host=False, network=False)</h4>
+
+<p>They check whether the value of <var>address</var> can be treated as a valid IP address.</p>
+
+<p>It is common to think of an IP address as a series of numbers joined by delimiter characters. These functions apply that rule on purpose. As a result, some forms that may be accepted in other contexts are rejected here. This includes integers, hexadecimal strings, values with leading zeros, IPv6 addresses with embedded interfaces, or IPv4 addresses mapped into IPv6, among others. Any value of this kind, or similar ones, is considered invalid.</p>
+
+<p>If the <var>host</var> parameter is <var>True</var>, then CIDR prefixes are not allowed.</p>
+
+<p>If the <var>network</var> parameter is <var>True</var> and the value is a CIDR prefix, then it is also checked that it strictly represents a network address (all host bits set to zero).</p>
+
+<p>The <var>ipv4</var> and <var>ipv6</var> parameters enable the protocols to test when they are <var>True</var>. The value must be valid for at least one of them. It is allowed to disable both protocols.</p>
+
+<p>The <var>is_ipv4</var> and <var>is_ipv6</var> functions are simple wrappers with the protocol parameters fixed.</p>
+
+<p>It returns <var>True</var> if the value is accepted as a valid IP, or <var>False</var> otherwise.</p>
+
+<pre><code>
+import eva
+
+print(eva.is_ip('192.0.2.123'))
+print(eva.is_ip('192.0.2.123/32'))
+print(eva.is_ip('192.0.2.0/24', network=True))
+print(eva.is_ip('192.0.2.123', host=True, network=True))
+print(eva.is_ip('2001:db8::1234'))
+print(eva.is_ipv6('2001:db8::1234'))
+
+print(eva.is_ip('192.0.2.123/32', host=True))
+print(eva.is_ip('192.0.2.123/24', network=True))
+print(eva.is_ipv4('2001:db8::1234'))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-is_pid">is_pid(pid, /, *, check=False)</h4>
+
+<p>It checks whether the value of <var>pid</var> can be treated as a valid process ID.</p>
+
+<p>If the <var>check</var> parameter is <var>True</var>, it also checks that the process exists at that moment.</p>
+
+<p>It returns <var>True</var> if the value is considered a valid PID, or <var>False</var> otherwise.</p>
+
+<pre><code>
+import eva, os, random
+
+pids = (
+0,
+1,
+os.getpid(),
+random.randint(1, 1_000_000),
+10**100
+)
+
+for pid in pids:
+    print(eva.is_pid(pid))
+
+print()
+
+for pid in pids:
+    print(eva.is_pid(pid, check=True))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-noop">noop(*args, **kwargs)</h4>
+
+<p>This is a typical "no operation" function. It accepts any kind of arguments, does nothing, and returns nothing (technically it returns <var>None</var>, like any function without an explicit <var>return</var>).</p>
+
+<pre><code>
+import eva, threading
+
+eva.noop()
+eva.noop('foo')
+eva.noop('foo', bar='quux')
+
+args = ('foo', 'bar', 'quux')
+thread = threading.Thread(args=args, target=eva.noop)
+thread.start()
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-normalize_float">normalize_float(number, /, *, maximum=None, minimum=None, padding=False, precision=None)</h4>
+<h4 id="fnc-normalize_integer">normalize_integer(number, /, *, maximum=None, minimum=None)</h4>
+
+<p>These two functions normalize the value of <var>number</var>. For <var>normalize_float</var> the value is expected to be a <var>float</var>, and for <var>normalize_integer</var> an <var>int</var>, but this is not strict because the value is converted to the target type as part of the normalization.</p>
+
+<p>The <var>maximum</var> and <var>minimum</var> parameters can be used to keep the normalized value within these limits. One, both, or neither can be set to leave the value unbounded. These parameters are expected to be of the type to which the value is being normalized.</p>
+
+<p>If the <var>padding</var> parameter is set to <var>True</var>, the returned value is a <var>str</var> padded with as many zeros in the decimal part as <var>precision</var> specifies.</p>
+
+<p>The <var>precision</var> parameter controls rounding of the decimal to the specified number of digits. The function uses the "half-up" rounding method when possible, if that fails, it falls back to the built-in <var>round</var> function, with a maximum of 15 decimal digits.</p>
+
+<p>A <var>ValueError</var> exception is raised if normalization fails. For example, if any parameter is NaN, or if <var>minimum</var> is greater than <var>maximum</var>.</p>
+
+<p>The function returns the normalized value based on the given parameters.</p>
+
+<pre><code>
+import eva
+
+print(eva.normalize_float(-0.0))
+print(eva.normalize_float(123.0, padding=True, precision=3))
+print(eva.normalize_integer(12, minimum=123, maximum=1234))
+
+number = 123.456789
+print(eva.normalize_float(number, minimum=1234.5))
+print(eva.normalize_float(number, maximum=12.0))
+print(eva.normalize_float(number, precision=1))
+
+number = 1234.56789
+print(eva.normalize_integer(number))
+print(eva.normalize_integer(number, minimum=1234))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-normalize_ip">normalize_ip(address, /, *, exploded=False, host=False, network=False, upper=False)</h4>
+
+<p>It normalizes an IP address.</p>
+
+<p>The <var>address</var> parameter is the address to normalize. It can be IPv4 or IPv6, with or without a CIDR prefix.</p>
+
+<p>If the <var>exploded</var> parameter is set to <var>True</var>, the long form is used. Otherwise, the compressed form is used.</p>
+
+<p>If the <var>host</var> parameter is set to <var>True</var>, the CIDR prefix is removed. Otherwise, if a prefix is present, it is kept.</p>
+
+<p>If the <var>network</var> parameter is set to <var>True</var>, and <var>address</var> was given with a CIDR prefix, it is normalized as a network address (all host bits set to zero).</p>
+
+<p>If the <var>upper</var> parameter is set to <var>True</var>, the result is returned in upper case. Otherwise, it is in lower case.</p>
+
+<p>The <var>exploded</var> and <var>upper</var> parameters only make sense for IPv6. They have no effect on IPv4.</p>
+
+<p>A <var>ValueError</var> exception is raised if the IP in <var>address</var> is considered <a href="#fnc-is_ip">invalid</a>.</p>
+
+<p>The function returns the normalized value based on the given parameters.</p>
+
+<pre><code>
+import eva
+
+address = '192.0.2.123/24'
+print(eva.normalize_ip(address))
+print(eva.normalize_ip(address, host=True))
+print(eva.normalize_ip(address, network=True))
+
+for address in ('192.0.2.123', '2001:db8::1234'):
+    print(eva.normalize_ip(address, exploded=True, upper=True))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-normalize_path">normalize_path(*args, absolute=False, leading=False, resolve=False, trailing=False)</h4>
+
+<p>It normalizes a path by resolving "." and ".." and by removing redundant separators.</p>
+
+<p>The positional parameters are the parts of the path to normalize. They are expected to be <var>str</var>, path-like objects, or even <var>bytes</var> (in that case they are converted to <var>str</var> using <var>surrogateescape</var> as the error handler). At least one is required. Only the first one can be an absolute path. The rest, if any, are treated as relative paths to join. None of these values can be empty or contain a null value.</p>
+
+<p>If the <var>absolute</var> parameter is set to <var>True</var>, the result is normalized as an absolute path.</p>
+
+<p>If the <var>leading</var> parameter is set to <var>True</var>, a path that starts with "//" is reduced to a single separator.</p>
+
+<p>If the <var>resolve</var> parameter is set to <var>True</var>, symbolic links are resolved. This also forces the path to become absolute, even if <var>absolute</var> is <var>False</var>.</p>
+
+<p>If the <var>trailing</var> parameter is set to <var>True</var>, a directory separator is always added at the end. Otherwise, it is always removed.</p>
+
+<p>A <var>ValueError</var> exception is raised if the path is considered invalid for any reason.</p>
+
+<p>The function returns the normalized path as a <var>str</var> based on the given parameters.</p>
+
+<pre><code>
+import eva, os
+
+print(eva.normalize_path('foo//bar//'))
+
+print(eva.normalize_path('/foo', 'bar', '.', 'QUUX', '..'))
+
+os.chdir('/tmp')
+print(eva.normalize_path('foo/bar', absolute=True))
+
+print(eva.normalize_path('/bin', resolve=True))
+
+print(eva.normalize_path('//foo/bar', leading=True))
+
+print(eva.normalize_path('/is-a-dir', trailing=True))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-normalize_text">normalize_text(text, /, *, full=False, printable=None, reduce=None, strip=None, uniform=None)</h4>
+
+<p>This function normalizes the <var>text</var> parameter into a <var>str</var>, with a set of optional actions that can also be applied. These actions can be enabled or disabled using their own parameters. <var>text</var> is expected to be a <var>str</var>, but this is not strict because the value is converted as part of the normalization.</p>
+
+<p>The <var>full</var> parameter enables all actions set to <var>None</var> when <var>True</var>, or disables them when <var>False</var>. A value of <var>None</var> indicates that the action is disabled by default and depends on this parameter. When an action is set explicitly, its own value overrides <var>full</var>. Thus, <var>full</var> acts as a global switch for actions that are not explicitly defined.</p>
+
+<p>If the <var>printable</var> parameter is set to <var>True</var>, only printable characters are allowed in the text. The characters <var>\t</var> and <var>\n</var> are also treated as printable. All other characters are replaced with the replacement character <var>\uFFFD</var>.</p>
+
+<p>If the <var>reduce</var> parameter is set to <var>True</var>, any character treated as whitespace is reduced to a single one when it appears in a repeated sequence.</p>
+
+<p>If the <var>strip</var> parameter is set to <var>True</var>, any character treated as whitespace is removed from the start and the end of the text.</p>
+
+<p>If the <var>uniform</var> parameter is set to <var>True</var>, all characters treated as whitespace are converted to the normal space character (<var>\x20</var>).</p>
+
+<p>The actions are applied in this order: <var>uniform</var>, <var>reduce</var>, <var>strip</var> and <var>printable</var>.</p>
+
+<p>The function returns the normalized text as a <var>str</var> based on the given parameters.</p>
+
+<pre><code>
+import eva
+
+text = ' Foo \t bar\n\nquux\x00. '
+
+print(eva.normalize_text(text))
+
+print(eva.normalize_text(text, full=True))
+
+print(eva.normalize_text(text, full=True, strip=False))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-path_is_dir">path_is_dir(path, /, *, follow)</h4>
+<h4 id="fnc-path_is_file">path_is_file(path, /, *, follow)</h4>
+<h4 id="fnc-path_is_link">path_is_link(path, /, *, follow)</h4>
+
+<p>They try to check whether <var>path</var> is a directory, a regular file, or a symbolic link.</p>
+
+<p>The <var>follow</var> parameter decides whether symbolic links in the path should be followed before checking its type. When it is <var>True</var>, links are followed. When it is <var>False</var>, the path is checked as it is, without following links.</p>
+
+<p>The <var>follow</var> parameter is basically useless in <var>path_is_link</var> when it is set to <var>True</var> (since it is assumed that at the end of a chain of symbolic links there is something that is not a link). At most, it can be used to detect whether <var>path</var> is a closed loop of symbolic links.</p>
+
+<p>They return <var>True</var> if the type of the path could be confirmed, or <var>False</var> otherwise or if an error occurs.</p>
+
+<pre><code>
+import eva
+
+print(eva.path_is_dir('/bin', follow=False))
+
+print(eva.path_is_dir('/bin', follow=True))
+
+print(eva.path_is_link('/bin', follow=False))
+
+print(eva.path_is_file('/bin/ls', follow=False))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-ping_ipv4">ping_ipv4(address, /, *, retries=None, timeout=None)</h4>
+<h4 id="fnc-ping_ipv6">ping_ipv6(address, /, *, retries=None, timeout=None)</h4>
+
+<p>They send a ping request to the remote host given in <var>address</var>.</p>
+
+<p>It is important to note that the request is done by calling the Linux <var>ping</var> command, with a careful set of arguments to make it safe and reliable. For example, <var>address</var> is not used directly to build the command. It is first resolved and validated to get the IP used in the call.</p>
+
+<p>The <var>retries</var> parameter sets the maximum number of attempts before giving up. The default is one attempt.</p>
+
+<p>The <var>timeout</var> parameter sets the maximum time, in seconds, to wait for each attempt. The default is one second. The <var>ping</var> command may not accept very large values, so this parameter is deliberately limited to one hour.</p>
+
+<p>Values such as zero retries or a zero second timeout are allowed. An infinite timeout is also allowed, because the <var>ping</var> command supports it.</p>
+
+<p>The function returns <var>True</var> if the request succeeds, or <var>False</var> otherwise. It also returns <var>False</var> if it fails because the <var>ping</var> command is not available or did not run correctly (it is present on most Linux systems and supports the same parameters).</p>
+
+<pre><code>
+import eva
+
+print(eva.ping_ipv4('microsoft.com', retries=2))
+print(eva.ping_ipv4('google.com', timeout=eva.SECOND / 2))
+
+print(eva.ping_ipv6('google.com'))
+print(eva.ping_ipv6('::1'))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-printe">printe(*args, **kwargs)</h4>
+<h4 id="fnc-printo">printo(*args, **kwargs)</h4>
+
+<p>They are wrappers around the built-in <var>print</var> function, with the special feature that they use <var><a href="#mth-Spinner-hide">Spinner.hide</a></var> and <var><a href="#prp-Terminal-brush">Terminal.brush</a></var> to cooperate and stay in sync with other parts of the terminal.</p>
+
+<p>Except that their <var>file</var> parameter is fixed and cannot be changed (<var>sys.__stderr__</var> for <var>printe</var> and <var>sys.__stdout__</var> for <var>printo</var>), all other features are the same as the built-in function, including parameters, behavior and return value.</p>
+
+<pre><code>
+import eva
+
+eva.printo('hello ', end='', flush=True)
+eva.printe('world!')
+
+with eva.Spinner.hide():
+    with eva.Terminal.brush:
+        print('goodbye!')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-randomize_ip">randomize_ip(address, /, *, network=False, seed=None)</h4>
+
+<p>It picks, in an arbitrary way, one of the possible IPs from the given network address.</p>
+
+<p>It is important to note that, if the CIDR prefix length allows it, the network address and the broadcast address are removed from the range for IPv4, and the "Subnet Router anycast" address is removed for IPv6.</p>
+
+<p>The <var>address</var> parameter is the network address, with a CIDR prefix, from which the IP is taken. Any value accepted by <var><a href="#fnc-is_ip">is_ip</a></var> is allowed. This means an IPv4 or IPv6 address, with or without a CIDR prefix. It is allowed for the host bits not to be all zero, since only the network bits are relevant.</p>
+
+<p>If the <var>network</var> parameter is set to <var>True</var>, the returned value includes both the IP and the CIDR prefix. Otherwise, only the IP is returned.</p>
+
+<p>If the <var>seed</var> parameter is given, the choice is not random but deterministic based on this seed. In this case, it must be of type <var>bytes</var> or <var>str</var>.</p>
+
+<p>It is allowed to pass an address without a CIDR prefix, or one with a "/32" prefix for IPv4 or "/128" for IPv6. In all these cases, the same IP given as input is always returned.</p>
+
+<p>See <var><a href="#fnc-normalize_ip">normalize_ip</a></var> to know which exceptions may be raised.</p>
+
+<p>The function returns an arbitrary IP address, with or without a CIDR prefix.</p>
+
+<pre><code>
+import eva
+
+address = '192.0.2.123/24'
+print(eva.randomize_ip(address))
+print(eva.randomize_ip(address, network=True))
+
+address = '2001:db8::/32'
+print(eva.randomize_ip(address, seed='foo'))
+print(eva.randomize_ip(address))
+print(eva.randomize_ip(address, seed=b'foo'))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-resolve_dns">resolve_dns(domain, /, *, ipv4=True, ipv6=True, shuffle=False)</h4>
+<h4 id="fnc-resolve_dns_ipv4">resolve_dns_ipv4(domain, /, *, shuffle=False, zen=True)</h4>
+<h4 id="fnc-resolve_dns_ipv6">resolve_dns_ipv6(domain, /, *, shuffle=False, zen=True)</h4>
+
+<p>They resolve the domain given in <var>domain</var> to get its IP addresses.</p>
+
+<p>The <var>ipv4</var> and <var>ipv6</var> parameters choose which protocols are used. Set them to <var>True</var> to enable a protocol, or to <var>False</var> to skip it.</p>
+
+<p>If the <var>shuffle</var> parameter is set to <var>True</var>, the IPs that are found are returned in a random order, to help avoid bias.</p>
+
+<p>The <var>zen</var> parameter is a boolean that turns zen mode on or off. When it is enabled, the return value is simplified to a more minimal form. When it is disabled, the return value contains more detail but is also more complex to use.</p>
+
+<p>It is allowed to disable both protocols or to pass an IP address in <var>domain</var>.</p>
+
+<p>The <var>resolve_dns_ipv4</var> and <var>resolve_dns_ipv6</var> functions are simple wrappers with the protocol parameters fixed.</p>
+
+<p>The function returns a tuple with the resolved IPs, or, if zen mode is enabled, a <var>str</var> containing the first IP. If <var>domain</var> cannot be resolved, it returns an empty tuple, or <var>False</var> in zen mode. The result can be evaluated in a boolean context, because an empty tuple is falsy, whereas a <var>str</var> containing an IP is truthy.</p>
+
+<pre><code>
+import eva
+
+domain = 'yahoo.com'
+
+for address in eva.resolve_dns(domain):
+    print(address)
+
+print()
+
+print(eva.resolve_dns_ipv4(domain))
+print(eva.resolve_dns_ipv6(domain))
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-run">run(command, /, *, binary=False, cwd=None, stdin=None, timeout=None, zen=True)</h4>
+
+<p>This function runs a system command. It is basically a wrapper around <var>subprocess.run</var>, used as syntactic sugar.</p>
+
+<p>The <var>command</var> parameter specifies the command to run. It can be provided as given, as the path to the executable (absolute or relative), with or without arguments.</p>
+
+<p>If the <var>binary</var> parameter is set to <var>True</var>, the captured standard output and error are handled as <var>bytes</var>. Otherwise they are returned as <var>str</var>, using UTF-8 encoding and <var>replace</var> as the error handler.</p>
+
+<p>The <var>cwd</var> parameter specifies the working directory, normalized as an absolute path, in which the command is run. If it is not provided, the current directory is used.</p>
+
+<p>The <var>stdin</var> parameter specifies the standard input for the command. It can be either <var>bytes</var> or <var>str</var>.</p>
+
+<p>The <var>timeout</var> parameter specifies a maximum time limit in seconds before the command is stopped. If it is not provided, or if its value is infinite, there is no limit.</p>
+
+<p>The <var>zen</var> parameter is a boolean that turns zen mode on or off. When it is enabled, the return value is simplified to a more minimal form. When it is disabled, the return value contains more detail but is also more complex to use.</p>
+
+<p>The return value is a <var>SimpleNamespace</var> object with these fields: <var>code</var> the command exit code, <var>exception</var> which is <var>None</var> if no exception was raised or the exception if one was raised, <var>stderr</var> and <var>stdout</var> with the captured output according to the <var>binary</var> parameter, and <var>success</var> which is <var>True</var> if the execution finished correctly or <var>False</var> otherwise. In zen mode, the return value is just the same as <var>success</var>. To be precise, <var>success</var> is <var>False</var> if, for any reason, the command was not run and finished correctly, or if <var>code</var> is not zero. Otherwise it is <var>True</var>.</p>
+
+<pre><code>
+import eva
+
+print(eva.run('echo foobar'))
+print(eva.run('false'))
+
+print()
+
+result = eva.run('tr a X', stdin='foobar', zen=False)
+for key, value in vars(result).items():
+    print(f'{key}: "{value}"')
+
+print()
+
+result = eva.run('sleep 2', timeout=eva.SECOND, zen=False)
+for key, value in vars(result).items():
+    print(f'{key}: "{value}"')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="fnc-user_is_admin">user_is_admin()</h4>
+
+<p>Checks whether the user executing the current process has administrator privileges.</p>
+
+<p>Returns <var>True</var> if the user has administrator privileges, or <var>False</var> otherwise.</p>
+
+<pre><code>
+import eva
+
+if eva.user_is_admin():
+    print('I am the root user')
+else:
+    print('try running as root')
+</code></pre>
+</section>
+</article>
+
+
+
+
+<h2 id="cls">classes</h2>
+
+
+
+<article>
+<section>
+<h4 id="cls-Chrono">Chrono(*, precision=False, timeout=False)</h4>
+
+<p>This class can be used as a stopwatch or as a timer. It provides access to the elapsed time or the remaining time until a limit is reached. It works with a monotonic counter, which makes it immune to changes in the system clock. The class uses a time resolution in seconds of type <var>float</var>, where the decimal part represents fractions of this base unit.</p>
+
+<p>The stopwatch starts at the moment of instantiation, but it can be reset later when needed, which allows the instance to be reused.</p>
+
+<p>The <var>precision</var> and <var>timeout</var> parameters allow setting these properties at instantiation time.</p>
+</section>
+
+<section>
+<h4 id="prp-Chrono-delta">delta RO</h4>
+
+<p>It provides the elapsed time according to <var>precision</var>. This is the base property for using the instance as a stopwatch.</p>
+</section>
+
+<section>
+<h4 id="prp-Chrono-expired">expired RO</h4>
+
+<p>This is a boolean that tells whether the time limit set by <var>timeout</var> has been reached. <var>precision</var> is taken into account for the calculation. It is always <var>False</var> if <var>timeout</var> is not defined.</p>
+</section>
+
+<section>
+<h4 id="prp-Chrono-precision">precision RW</h4>
+
+<p>It specifies the rounding precision used when reading <var>delta</var> and <var>remaining</var>, as well as the one used to evaluate <var>expired</var>. It must be an <var>int</var> to indicate the number of decimal places, or <var>False</var> to disable this feature.</p>
+</section>
+
+<section>
+<h4 id="prp-Chrono-remaining">remaining RO</h4>
+
+<p>It provides the remaining time, according to <var>precision</var>, until the <var>timeout</var> limit is reached. Its value is zero once the limit has been reached or passed, and it is always infinite if the limit is not defined (the infinite value simplifies calculations with other <var>float</var> values and also serves as a sentinel).</p>
+</section>
+
+<section>
+<h4 id="prp-Chrono-timeout">timeout RW</h4>
+
+<p>It specifies the time limit on which <var>expired</var> and <var>remaining</var> depend. Setting <var>False</var> disables this feature. This is the base property for using the instance as a timer.</p>
+</section>
+
+<section>
+<h4 id="mth-Chrono-reset">reset()</h4>
+
+<p>Resets the initial reference time used for the calculations.</p>
+</section>
+
+<section>
+<pre><code>
+import eva, time
+
+chrono = eva.Chrono(precision=3, timeout=eva.SECOND / 2)
+
+while not chrono.expired:
+    time.sleep(eva.SECOND / 10)
+    print(chrono.delta, chrono.remaining)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="cls-Latch">Latch(path, /, *, auto=False, pid=None, socket=False)</h4>
+
+<p>This class implements an inter-process locking mechanism based on a given resource, so that only one instance can acquire it (the first one that succeeds) and then claim ownership of it.</p>
+
+<p>Its most common use is to prevent two or more processes of the same daemon from running at the same time. Otherwise it would be redundant and even harmful. The other processes, since they cannot acquire the resource, understand that they have no right to run their role.</p>
+
+<p>Typically this mechanism is based on an operating-system lock on a given file: the lock is acquired, kept for as long as needed, and then released. This class implements exactly this idea by using a lock of type <var>fcntl.flock</var>.</p>
+
+<p>However, although this kind of lock is very common and usually enough, this class also supports an optional alternative lock based on a TCP socket. When it is enabled, it works as follows: the file path is no longer the exact resource that is locked, but instead a deterministic IPv4 address and port in the loopback network are computed from it, and the code tries to claim that socket. No file is touched, and the path does not even need to exist. It literally acts as a seed to select the IP and port in a "random" way.</p>
+
+<p>The range used is 127.0.0.0/8. From this range, the network address (127.0.0.0), localhost (127.0.0.1) and the broadcast address (127.255.255.255) are deliberately avoided. For the port, privileged ones (below 1024) are avoided.</p>
+
+<p>The <var>path</var> parameter specifies the resource on which the lock is based. It is exactly the path to the file to be locked. This path is canonicalized as an absolute path with no symbolic links.</p>
+
+<p>The <var>auto</var> parameter is a boolean that tells whether the lock should be attempted automatically at instantiation time.</p>
+
+<p>The <var>pid</var> parameter specifies the PID number that is written into the file once the lock is acquired. If it is omitted, the PID of the current process is used. This number must be <a href="#fnc-is_pid">valid</a>, otherwise a <var>ValueError</var> is raised. There does not need to be a running process with that PID until the exact moment when the lock is attempted. This parameter is irrelevant for socket-based locking.</p>
+
+<p>If the <var>socket</var> parameter is set to <var>True</var>, the instance uses socket-based locking.</p>
+
+<p>Although the class has the <var>on</var> and <var>off</var> methods to acquire and release the lock manually, it is recommended to avoid them and use the class as a context manager in a <var>with</var> statement instead.</p>
+</section>
+
+<section>
+<h4 id="prp-Latch-path">path RO</h4>
+
+<p>The path to the file used as the locking resource that was passed at instantiation.</p>
+</section>
+
+<section>
+<h4 id="prp-Latch-pid">pid RO</h4>
+
+<p>The PID number that was passed at instantiation. If the lock is file-based and is successfully acquired, this PID is written into the file.</p>
+</section>
+
+<section>
+<h4 id="prp-Latch-socket">socket RO</h4>
+
+<p>A boolean that tells whether the selected lock is socket-based.</p>
+</section>
+
+<section>
+<h4 id="prp-Latch-status">status RO</h4>
+
+<p>A boolean that tells whether the instance has acquired the lock. It is <var>False</var> both when it failed and when it has not been tried yet.</p>
+</section>
+
+<section>
+<h4 id="mth-Latch-off">off()</h4>
+
+<p>Releases the lock. This method is idempotent and raises no exceptions.</p>
+</section>
+
+<section>
+<h4 id="mth-Latch-on">on()</h4>
+
+<p>Tries to acquire the lock. This method is idempotent and raises no exceptions. If the lock is file-based, the value of <var>pid</var> must match a process that really exists at that moment, otherwise the lock is not attempted. It returns <var>True</var> if the lock was acquired, or <var>False</var> otherwise.</p>
+</section>
+
+<section>
+<pre><code>
+path = '/tmp/foobar.pid'
+
+with eva.Latch(path) as l1:
+    with eva.Latch(path) as l2:
+        with eva.Latch(path, socket=True) as l3:
+            with eva.Latch(path, socket=True) as l4:
+                print(l1.status, l2.status, l3.status, l4.status)
+</code></pre>
+
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="cls-Logger">Logger(kind, /, *, mute=False, path=False, stderr=None, timestamp=False)</h4>
+
+<p>This class manages the emission of log messages. It can show them on the terminal and optionally write them to a file. The class is designed for multithreaded environments, so writes to the terminal and to the file are locked to avoid corruption.</p>
+
+<p>Each instance has a set of properties that define how the message is emitted.</p>
+
+<p>The most important property of an instance is its type. Each type has a fixed color and a default destination, which can be either standard output or standard error.</p>
+
+<p>The emitted message is shown on the terminal prefixed with a timestamp and the type. This output is properly formatted with colors, indentation, alignment, message normalization and multiline wrapping according to the terminal width. If the destination is not interactive, it is not formatted and is sent as plain text.</p>
+
+<p>The <var>kind</var> parameter sets the type of message the instance identifies with. It must be one of the values defined in <var><a href="#cst-LoggerType">LoggerType</a></var>.</p>
+
+<p>The <var>mute</var>, <var>path</var>, <var>stderr</var> and <var>timestamp</var> parameters allow setting these properties at instantiation time.</p>
+
+<p>Direct instantiation of this class is not required. Each type has its own subclass: <var>Alert</var>, <var>Debug</var>, <var>Error</var>, <var>Fatal</var>, <var>Info</var> and <var>Okay</var>. These subclasses inherit from the main class and fix the <var>kind</var> argument. Nothing else.</p>
+
+<p>To emit a message, the instance must be called as a function, since it implements the <var>__call__</var> dunder. The message to emit is simply its first parameter. Since the message is a <var>str</var>, it can be formatted by interpolating the other parameters (if any) using f-strings. If there are no parameters other than the message, it is emitted as is. It is allowed to omit the message and call the instance with no parameters, in which case an empty message is emitted. The return value of each call is a boolean that tells whether the message could be written to the file set by <var>path</var>, or <var>True</var> if <var>path</var> is disabled.</p>
+</section>
+
+<section>
+<h4 id="prp-Logger-mute">mute RW</h4>
+
+<p>A boolean that tells whether emitted messages should be shown on the terminal. Even when it is set to <var>True</var>, messages are still written to the file according to <var>path</var>.</p>
+</section>
+
+<section>
+<h4 id="prp-Logger-path">path RW</h4>
+
+<p>The path to the file where emitted messages are written. This path is normalized and converted to an absolute path. Messages are written as plain text, prefixed by the <var><a href="#cst-LoggerTimestamp-ISO">LoggerTimestamp.ISO</a></var> timestamp and the instance type. This property must be set to <var>False</var> to disable this feature.</p>
+</section>
+
+<section>
+<h4 id="prp-Logger-stderr">stderr RW</h4>
+
+<p>A boolean that tells whether emitted messages should go to standard error instead of standard output. Each <var><a href="#cst-LoggerType">LoggerType</a></var> already has a default destination, but it can be changed with this property.</p>
+</section>
+
+<section>
+<h4 id="prp-Logger-timestamp">timestamp RW</h4>
+
+<p>The timestamp format that should be shown on the terminal when a message is emitted. It accepts any value from <var><a href="#cst-LoggerTimestamp">LoggerTimestamp</a></var>. This property must be set to <var>False</var> to disable this feature.</p>
+</section>
+
+<section>
+<h4 id="prp-Logger-type">type RO</h4>
+
+<p>The type of the instance. It can be any value from <var><a href="#cst-LoggerType">LoggerType</a></var>. It cannot be changed after the object has been created.</p>
+</section>
+
+<section>
+<pre><code>
+import eva
+
+logger = eva.Logger(eva.LoggerType.INFO)
+logger('hello world!')
+
+info = eva.Info()
+info('hello {}!', 'world')
+
+error = eva.Error(path='/tmp/error.log')
+error('something went wrong')
+
+okay = eva.Okay(timestamp=eva.LoggerTimestamp.TIME)
+okay('everything is alright')
+
+debug = eva.Debug(path='/tmp/debug.log')
+debug.mute = True
+debug('my type is {type}', type=debug.type)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="cls-Reader">Reader()</h4>
+
+<p>This class allows capturing standard input by reading it in the background. It uses a secondary thread to monitor it and distribute the data to the active instances.</p>
+
+<p>The secondary thread mechanism avoids blocking the main thread forever. Instead, there is at most a short polling wait before trying again, which lets the thread breathe and handle other tasks. In fact, if standard input handling is delegated to another thread, this polling wait does not even affect the main thread.</p>
+
+<p>The secondary thread acts as an engine. It only starts when at least one instance becomes active, and it keeps running until the last active instance is deactivated. When it starts, and if the terminal is interactive, the terminal input mode is set to cbreak. The previous terminal mode is first saved so it can be restored when the engine stops.</p>
+
+<p>While the engine is running, it periodically checks whether there is new data on standard input. If so, the data is distributed by appending it to the buffer of each active instance. Each buffer is a FIFO queue, and consuming it produces a captured chunk, not the entire buffer so far. Each chunk can be at least 1 byte and at most 1024 bytes.</p>
+
+<p>Although the class has the <var>on</var> and <var>off</var> methods to manually enable and disable reading, it is recommended to avoid them and use the class as a context manager in a <var>with</var> statement instead.</p>
+</section>
+
+<section>
+<h4 id="prp-Reader-status">status RO</h4>
+
+<p>A boolean that shows the state of the instance. It is <var>True</var> when it is registered as active, or <var>False</var> otherwise.</p>
+</section>
+
+<section>
+<h4 id="prp-Reader-wait">wait RW</h4>
+
+<p>A class property (not an instance property) that sets the maximum wait time in seconds for each poll. Its default value is <var>0.25</var> seconds.</p>
+</section>
+
+<section>
+<h4 id="mth-Reader-bye">bye()</h4>
+
+<p>A class method (not an instance method) that deactivates all active instances. It literally calls the <var>off</var> method of each instance.</p>
+</section>
+
+<section>
+<h4 id="mth-Reader-off">off()</h4>
+
+<p>Deactivates the instance. From that point on, its buffer is cleared and the instance no longer receives what the engine captures. The engine is stopped if this instance was the last one still active. This method is idempotent and raises no exceptions.</p>
+</section>
+
+<section>
+<h4 id="mth-Reader-on">on()</h4>
+
+<p>Activates the instance. From that point on, whatever the engine captures is appended to its buffer. The engine is started if this instance is the first one to become active. This method is idempotent and raises no exceptions.</p>
+</section>
+
+<section>
+<h4 id="mth-Reader-poll">poll()</h4>
+
+<p>Removes and returns one chunk from its buffer. Since it is a FIFO queue, this chunk is the oldest one, not the newest. The chunk is a <var>bytes</var> object and is returned immediately. If the buffer is empty or the instance is not active, it waits for at most the number of seconds set by <var>wait</var>. When this time limit is reached, the return value is <var>None</var> to signal that there is still nothing captured. This method can also return <var>False</var> to signal that standard input has been fully consumed, so the instance can be deactivated. This happens when standard input is not an interactive terminal.</p>
+</section>
+
+<section>
+<pre><code>
+import eva
+
+with eva.Reader() as reader:
+    print('press any key... (ESC to exit)')
+
+    while True:
+        chunk = reader.poll()
+
+        if chunk in (False, b'\x1B'):
+            print('goodbye!')
+            break
+        elif chunk is not None:
+            print(chunk)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="cls-Terminal">Terminal(*, mute=False, stderr=False)</h4>
+
+<p>This class provides an abstraction over the terminal as syntactic sugar. It simplifies common actions that may be needed when working with a terminal (mainly ANSI sequences), such as clearing the screen or part of it, moving the cursor, hiding it, and so on. The class tries to be agnostic to whether the output is really a terminal or not.</p>
+
+<p>It is safe for multi-threaded environments. This is done by acquiring a lock in the instances. The one that owns it has the right to manipulate the terminal until it releases it.</p>
+
+<p>Before writing to the terminal, this class uses <var><a href="#mth-Spinner-hide">Spinner.hide</a></var> to temporarily silence any spinner that may be active.</p>
+
+<p>The <var>mute</var> and <var>stderr</var> parameters allow setting these properties at instantiation time.</p>
+</section>
+
+<section>
+<h4 id="prp-Terminal-brush">brush RO</h4>
+
+<p>This is a class property (not an instance property) that publicly exposes the <var>threading.RLock</var> object used to synchronize writing to the terminal. Each instance gets the right to write to it by acquiring this lock. Classes or functions such as <var><a href="#cls-Logger">Logger</a></var>, <var><a href="#fnc-printe">printe</a></var>, <var><a href="#fnc-printo">printo</a></var>, or <var><a href="#cls-Spinner">Spinner</a></var> use it directly or indirectly to synchronize. So, when using them, there is no need to use this lock manually. In fact, in general it is better to avoid it.</p>
+</section>
+
+<section>
+<h4 id="prp-Terminal-height">height RO</h4>
+<h4 id="prp-Terminal-width">width RO</h4>
+
+<p>These properties return the height and width of the terminal, in units commonly known as "rows" and "columns". No exception is raised if these values cannot be obtained. In that case, very low default values such as <var>1</var> are returned instead. In such a case, these values should be seen as sentinel values.</p>
+</section>
+
+<section>
+<h4 id="prp-Terminal-mute">mute RW</h4>
+
+<p>A boolean that, when set to <var>True</var>, makes any write from the instance to the terminal be ignored. It mainly affects the <var>write</var> method and, by extension, any other method that sends ANSI sequences to the terminal. It is therefore a way to mute the instance.</p>
+</section>
+
+<section>
+<h4 id="prp-Terminal-stderr">stderr RW</h4>
+
+<p>A boolean that, when set to <var>True</var>, makes the terminal target be standard error, or <var>False</var> to make it standard output.</p>
+</section>
+
+<section>
+<h4 id="prp-Terminal-stream">stream RO</h4>
+
+<p>Returns the target stream of the instance. It is literally <var>sys.__stderr__</var> if its <var>stderr</var> property is <var>True</var>, or <var>sys.__stdout__</var> otherwise.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-clear_line">clear_line(*, end=True, start=True)</h4>
+<h4 id="mth-Terminal-clear_screen">clear_screen(*, end=True, start=True)</h4>
+
+<p>They allow clearing the current line, the screen, or parts of them. ANSI sequences are used for this. If the <var>start</var> parameter is <var>True</var>, the section from the beginning to the cursor is cleared. If the <var>end</var> parameter is <var>True</var>, the section from the cursor to the end is cleared. The corresponding section is not cleared if its parameter is <var>False</var>.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-clear_scrollback">clear_scrollback()</h4>
+
+<p>Clears the scrollback history. ANSI sequences are used for this.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-disable_alt_screen">disable_alt_screen()</h4>
+<h4 id="mth-Terminal-enable_alt_screen">enable_alt_screen()</h4>
+
+<p>Enables or disables the alternate screen of the terminal. ANSI sequences are used for this.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-disable_alt_scroll">disable_alt_scroll()</h4>
+<h4 id="mth-Terminal-enable_alt_scroll">enable_alt_scroll()</h4>
+
+<p>Enables or disables the alternate scroll mode of the terminal. ANSI sequences are used for this.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-disable_cursor">disable_cursor()</h4>
+<h4 id="mth-Terminal-enable_cursor">enable_cursor()</h4>
+
+<p>Enables or disables cursor visibility. ANSI sequences are used for this.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-move_by">move_by(*, x=None, y=None)</h4>
+<h4 id="mth-Terminal-move_home">move_home()</h4>
+<h4 id="mth-Terminal-move_to">move_to(*, x=None, y=None)</h4>
+
+<p>They move the cursor position. ANSI sequences are used for this. The <var>x</var> and <var>y</var> parameters are the horizontal and vertical axes where to place the cursor. If they are <var>0</var>, the cursor does not move on that axis. The <var>move_by</var> method moves the cursor relative to its current position, so its parameters can be negative. The <var>move_to</var> method moves the cursor to an absolute position in the terminal, so it does not accept negative values. The <var>move_home</var> method moves the cursor to its home position (there is an ANSI sequence for this, but <var>move_to(x=1, y=1)</var> also achieves something similar).</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-reset_terminal">reset_terminal()</h4>
+
+<p>Resets the terminal, restoring its default state. ANSI sequences are used for this.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-restore_cursor">restore_cursor()</h4>
+<h4 id="mth-Terminal-save_cursor">save_cursor()</h4>
+
+<p>They save and restore the cursor position using ANSI sequences. The <var>save_cursor</var> function saves the current cursor position. The cursor can then be moved back to that saved position using <var>restore_cursor</var>.</p>
+</section>
+
+<section>
+<h4 id="mth-Terminal-write">write(content, /, *, flush=True)</h4>
+
+<p>Writes to the terminal. The <var>content</var> parameter sets the data to write and must be a <var>str</var>. The <var>flush</var> parameter is a boolean that, when <var>True</var>, makes the write immediate.</p>
+</section>
+
+<section>
+<pre><code>
+import eva
+
+term = eva.Terminal()
+term.save_cursor()
+term.enable_alt_screen()
+term.clear_screen()
+term.disable_cursor()
+
+term.move_home()
+term.write('foo')
+term.move_to(y=2)
+term.write('bar')
+term.move_by(x=-3, y=1)
+term.write('quux')
+
+term.write('\nhello world!\n')
+
+with eva.Terminal.brush:
+    print('goodbye!')
+
+term.enable_cursor()
+input('(press ENTER to exit)')
+term.clear_screen()
+term.disable_alt_screen()
+term.restore_cursor()
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
+<h4 id="cls-Spinner">Spinner(*, auto=False, colors=None, glyphs=None, message=None, tempo=None)</h4>
+
+<p>This class manages spinner-style animations. During long-running tasks, these animations are useful to show visual feedback in the terminal.</p>
+
+<p>A background thread is used to manage active spinners. This avoids blocking the main thread and lets it handle other tasks.</p>
+
+<p>The background thread acts as an engine. It only starts when one of the instances is activated, and it keeps running until the last active instance is deactivated.</p>
+
+<p>While the engine is running, the animation of the last activated spinner is shown in the terminal. There is therefore a LIFO stack of active instances, and the most recent one is the one shown. This means several spinners can be active at the same time, but only the top one is visible. The engine handles this.</p>
+
+<p>Each instance can define its own look and behavior.</p>
+
+<p>The animation hides the cursor and, for each frame, shows one colored character and a message on the current cursor line. To avoid corrupting the terminal, this animation is coordinated with other classes or functions such as <var><a href="#cls-Logger">Logger</a></var>, <var><a href="#fnc-printe">printe</a></var>, <var><a href="#fnc-printo">printo</a></var>, or <var><a href="#cls-Terminal">Terminal</a></var>.</p>
+
+<p>Although the class has the <var>on</var> and <var>off</var> methods to activate and deactivate spinners manually, it is recommended to avoid them and use the class as a context manager in a <var>with</var> statement instead.</p>
+
+<p>The <var>auto</var> parameter is a boolean that tells whether the spinner should be activated automatically at instantiation time.</p>
+
+<p>The <var>colors</var>, <var>glyphs</var>, <var>message</var> and <var>tempo</var> parameters allow setting these properties at instantiation time.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-colors">colors RW</h4>
+
+<p>This is a tuple with the animation colors. It can be edited by setting a list or a tuple. An empty tuple is allowed. Each element is an 8-bit ANSI color as an <var>int</var>, so there are up to 256 possible colors, from <var>0</var> to <var>255</var>. Each frame uses one of them to color the glyph.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-current">current RO</h4>
+
+<p>This is a class property (not an instance property) that holds the priority instance, that is, the spinner that is currently being shown. Its value is <var>False</var> if no spinner is active. Because an instance is truthy, this property can be used as a boolean to know whether any spinner is being shown.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-glyphs">glyphs RW</h4>
+
+<p>This is a tuple with the animation glyphs. It can be edited by setting a list or a tuple. It can also be set to a <var>str</var>, which is then split into individual characters. An empty tuple is allowed. Each element is a single character. Each frame uses one of them to animate the spinner.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-message">message RW</h4>
+
+<p>Sets the message that goes with the animation. It is usually a <var>str</var>, but it can also be a function. In that case, the function is called on each frame and its return value is used as the message. In all cases, an empty string is allowed.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-status">status RO</h4>
+
+<p>A boolean that shows the state of the instance. It is <var>True</var> when it is registered as active, or <var>False</var> otherwise.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-stderr">stderr RW</h4>
+
+<p>This is a class property (not an instance property) that sets the output target of the animation. It accepts <var>True</var> (its default value) to send the animation to standard error. It is <var>False</var> for standard output. The animation is only shown if the target is an interactive terminal.</p>
+</section>
+
+<section>
+<h4 id="prp-Spinner-tempo">tempo RW</h4>
+
+<p>Defines the speed of the animation. It sets the interval in seconds between each frame. Its default value is <var>0.25</var> seconds.</p>
+</section>
+
+<section>
+<h4 id="mth-Spinner-bye">bye()</h4>
+
+<p>A class method (not an instance method) that deactivates all active instances. It literally calls the <var>off</var> method of each instance.</p>
+</section>
+
+<section>
+<h4 id="mth-Spinner-hide">hide()</h4>
+
+<p>This is a class method (not an instance method) that temporarily hides spinner animations. It is used as a context manager with the <var>with</var> statement. Classes or functions such as <var><a href="#cls-Logger">Logger</a></var>, <var><a href="#fnc-printe">printe</a></var>, <var><a href="#fnc-printo">printo</a></var>, or <var><a href="#cls-Terminal">Terminal</a></var> already use it to coordinate. So when using them, there is no need to call this method manually. In general, it is better to avoid using it directly.</p>
+</section>
+
+<section>
+<h4 id="mth-Spinner-off">off()</h4>
+
+<p>Deactivates the instance. The animation engine is stopped if this instance was the last one still active. This method is idempotent and raises no exceptions.</p>
+</section>
+
+<section>
+<h4 id="mth-Spinner-on">on()</h4>
+
+<p>Activates the instance. The engine is started if this instance is the first one to be registered as active. This method is idempotent and raises no exceptions. In practice, calling this method on a spinner that is already active makes it the priority one. That is, it is moved in the LIFO stack of active spinners and becomes the visible one if it was not.</p>
+</section>
+
+<section>
+<pre><code>
+import eva, random, time
+
+nested1 = eva.Spinner(message='my turn', tempo=eva.SECOND / 10)
+
+nested2 = eva.Spinner()
+nested2.colors = (0, 1, 15)
+nested2.message = lambda: random.randint(0, 9)
+
+something_that_takes_time = lambda: time.sleep(eva.SECOND * 3)
+
+with eva.Spinner(glyphs='◳◲◱◰'):
+    something_that_takes_time()
+
+    with nested1:
+        something_that_takes_time()
+
+        with nested2:
+            something_that_takes_time()
+            eva.printo('hello world!')
+
+        something_that_takes_time()
+
+    with eva.Spinner.hide():
+        print('goodbye!')
+
+    something_that_takes_time()
+</code></pre>
+</section>
+</article>
+
+
+
+
+</body>
+</html>
+<!--
+vim: et fenc=utf-8 nobomb sts=4 sw=4 ts=4
+-->

@@ -1,0 +1,178 @@
+
+:root{
+    --ACCENT:     #66d9ef;
+    --BACKGROUND: #272822;
+    --LINK:       #f92672;
+    --GAP:        0.5em;
+    --MARGIN:     5em;
+    --RADIUS:     4px;
+    --SECONDARY:  #e6db74;
+}
+
+@font-face{
+    font-family: main-monospace;
+    src:         url(JetBrainsMonoNL-Light.ttf);
+}
+
+@font-face{
+    font-family: main-sans;
+    src:         url(Ubuntu-L.ttf);
+}
+
+*{
+    box-sizing: border-box;
+    margin:     0;
+    padding:    0;
+}
+
+a{
+    color:           var(--LINK);
+    text-decoration: underline;
+}
+
+
+article{
+    background:    #3e3d32;
+    border-radius: var(--RADIUS);
+    margin:        var(--MARGIN) 0;
+    padding:       2em 0;
+}
+
+body{
+    background: var(--BACKGROUND);
+    color:      #f8f8f2;
+    margin:     var(--MARGIN);
+}
+
+h2{
+    color:          var(--ACCENT);
+    font-size:      2em;
+    font-style:     italic;
+    font-weight:    bold;
+    text-align:     center;
+    text-transform: uppercase;
+}
+
+h3{
+    color:       var(--ACCENT);
+    font-size:   1.5em;
+    font-style:  italic;
+    font-weight: bold;
+}
+
+h4{
+    border-left:  calc(1em / 4) var(--SECONDARY) solid;
+    color:        var(--ACCENT);
+    font-family:  main-monospace;
+    font-size:    1em;
+    font-weight:  bold;
+    padding-left: calc(1em / 2);
+}
+
+html{
+    font-family: main-sans;
+    font-size:   20px;
+}
+
+li ul{
+    margin-top: var(--GAP);
+}
+
+li::marker{
+    color: var(--SECONDARY);
+}
+
+p{
+    margin: 1em 0;
+}
+
+p:last-of-type, section:last-of-type{
+    margin-bottom: 0;
+}
+
+pre{
+    background:    #1e1f1c;
+    border-radius: var(--RADIUS);
+    box-shadow:    0.5em 0.5em 0.75em #171814;
+    color:         #f8f8f2;
+    display:       block;
+    font-family:   main-monospace;
+    font-size:     0.75em;
+    margin:        2.5em 12vw 0 12vw;
+    overflow:      auto;
+    position:      relative;
+}
+    pre a{
+        all:            unset;
+        background:     var(--SECONDARY);
+        border-radius:  0 var(--RADIUS);
+        color:          var(--BACKGROUND);
+        cursor:         pointer;
+        font-weight:    bold;
+        padding:        4px;
+        position:       absolute;
+        text-transform: uppercase;
+        top:            0;
+        right:          0;
+
+    }
+
+    pre code{
+        font:       inherit;
+        margin-top: -1em;
+
+    }
+
+section{
+    margin: 0 2em 2em 2em;
+}
+
+ul{
+    display:         flex;
+    flex-direction:  column;
+    gap:             var(--GAP);
+    list-style-type: disc;
+    padding-left:    1em;
+}
+
+var{
+    background:    #49483e;
+    border-radius: 2px;
+    color:         #ae81ff;
+    font-family:   main-monospace;
+    font-size:     0.95em;
+    font-style:    oblique 3deg;
+    padding:       0 4px;
+}
+    var a{
+        color:           inherit;
+        text-decoration: underline var(--LINK);
+    }
+
+
+
+
+@media (max-width: 900px){
+    article{
+        margin:  1em 0;
+        padding: 1em 0;
+    }
+
+    body{
+        margin: 1em;
+    }
+
+    section{
+        margin: 0 1em 1em 1em;
+    }
+        section > pre{
+            margin: 1.25em 0 0 0;
+        }
+}
+
+
+
+
+/*
+vim: et fenc=utf-8 nobomb sts=4 sw=4 ts=4
+*/
