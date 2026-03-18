@@ -125,9 +125,11 @@ def _ping(address, family, /, *, retries=None, timeout=None):
 
 
 
-def _put_content_to_file(path, content, /, *, eol, lock, overwrite):
+def _put_content_to_file(path, content, /, *, eol, exclusive, lock, overwrite):
     eol       = bool(eol)
+    exclusive = bool(exclusive)
     lock      = bool(lock)
+    mode      = 'xb' if exclusive else 'ab'
     overwrite = bool(overwrite)
     path      = normalize_path(path)
     ret       = False
@@ -143,11 +145,11 @@ def _put_content_to_file(path, content, /, *, eol, lock, overwrite):
         content += M.os.linesep.encode()
 
     with M.contextlib.suppress(OSError):
-        with open(path, mode='ab') as fd:
+        with open(path, mode=mode) as fd:
             if lock:
                 M.fcntl.flock(fd, M.fcntl.LOCK_EX)
 
-            if overwrite:
+            if exclusive or overwrite:
                 fd.truncate(0)
 
             fd.write(content)
@@ -160,7 +162,7 @@ def _put_content_to_file(path, content, /, *, eol, lock, overwrite):
 
 
 def append_file(path, content, /, *, eol=False, lock=False):
-    return _put_content_to_file(path, content, eol=eol, lock=lock, overwrite=False)
+    return _put_content_to_file(path, content, eol=eol, exclusive=False, lock=lock, overwrite=False)
 
 
 
@@ -826,8 +828,8 @@ def user_is_admin():
 
 
 
-def write_file(path, content, /, *, lock=False):
-    return _put_content_to_file(path, content, eol=False, lock=lock, overwrite=True)
+def write_file(path, content, /, *, exclusive=False, lock=False):
+    return _put_content_to_file(path, content, eol=False, exclusive=exclusive, lock=lock, overwrite=True)
 
 
 
