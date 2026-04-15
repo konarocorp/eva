@@ -117,7 +117,7 @@ def _ping(address, family, /, *, retries=None, timeout=None):
         command = template.format(family=family, ip=ip, wait=wait)
 
         for _ in range(retries):
-            if ret := run(command, timeout=timeout):
+            if ret := run(command, cwd='/', timeout=timeout):
                 break
 
     return ret
