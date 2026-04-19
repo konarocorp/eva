@@ -155,6 +155,19 @@
             <a href="#mth-Chrono-reset">reset</a>,
             <a href="#prp-Chrono-timeout">timeout</a></li>
 
+            <li><a href="#cls-CPU">CPU</a>:
+            <a href="#prp-CPU-frequency">frequency</a>,
+            <a href="#mth-CPU-get_cpus">get_cpus</a>,
+            <a href="#prp-CPU-interval">interval</a>,
+            <a href="#prp-CPU-load">load</a>,
+            <a href="#prp-CPU-maxfreq">maxfreq</a>,
+            <a href="#prp-CPU-maxscal">maxscal</a>,
+            <a href="#prp-CPU-minfreq">minfreq</a>,
+            <a href="#prp-CPU-minscal">minscal</a>,
+            <a href="#prp-CPU-online">online</a>,
+            <a href="#prp-CPU-temperature">temperature</a>,
+            <a href="#prp-CPU-thread">thread</a></li>
+
             <li><a href="#cls-Latch">Latch</a>:
             <a href="#prp-Latch-path">path</a>,
             <a href="#prp-Latch-pid">pid</a>,
@@ -1117,6 +1130,118 @@ while not chrono.expired:
 
 <article>
 <section>
+<h4 id="cls-CPU">CPU(thread, /)</h4>
+
+<p>This class provides an abstraction of the processor as syntactic sugar. It allows accessing certain details, either globally or as an independent logical CPU when instantiated.</p>
+
+<p>By design, in order to abstract processor features, this class deliberately assumes that the hardware contains a single physical processor.</p>
+
+<p>The <var>thread</var> parameter is an <var>int</var> that specifies the logical CPU identifier to instantiate. Any identifier that could theoretically be available at some point is accepted. For example, if the hardware supports 10 CPUs, all of them can be instantiated even if only 5 are currently available. A <var>ValueError</var> is raised when attempting to instantiate with an invalid identifier.</p>
+
+<p>This class abstracts the particular details of each processor model. This is especially complex when dealing with temperature sensors. The current implementation takes into account AMD, Intel and Raspberry Pi processors. It may also support other models due to how Raspberry Pi processors are handled. Support for additional models is under development.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-frequency">frequency RO</h4>
+
+<p>It is a <var>float</var> that provides the current CPU frequency in MHz.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-interval">interval RW</h4>
+
+<p>This is a class property (not an instance property). Due to how the <var><a href="#prp-CPU-load">load</a></var> property is calculated, it may be useful to perform recurrent reads with a fixed interval. This allows an arbitrary query for the load to return a more accurate value. This property specifies a time in seconds as a <var>float</var> to define the interval. In that case, a background thread is started to perform the query at a fixed rate. The minimum value is <var>0.1</var> seconds. One second is generally enough. The default value is <var>False</var>, which disables recurrent querying.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-load">load RO</h4>
+
+<p>It is a <var>float</var> that provides the processor load as a percentage. This is both a class property and an instance property. In the first case, it is the global load, while in the second case it is the load of the instantiated CPU. The value is calculated differentially with respect to a previous query. Therefore, the first read always returns zero, and for arbitrary queries it is recommended to enable the <var><a href="#prp-CPU-interval">interval</a></var> property to obtain more useful measurements.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-maxfreq">maxfreq RO</h4>
+
+<p>It is a <var>float</var> that provides the maximum CPU frequency in MHz determined by the hardware.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-maxscal">maxscal RO</h4>
+
+<p>It is a <var>float</var> that provides the maximum CPU frequency in MHz allowed by the current scaling policy. This limit is dynamic and may change according to the system.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-minfreq">minfreq RO</h4>
+
+<p>It is a <var>float</var> that provides the minimum CPU frequency in MHz determined by the hardware.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-minscal">minscal RO</h4>
+
+<p>It is a <var>float</var> that provides the minimum CPU frequency in MHz allowed by the current scaling policy. This limit is dynamic and may change according to the system.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-online">online RO</h4>
+
+<p>A boolean that tells whether the CPU is fully active and usable by the system.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-temperature">temperature RO</h4>
+
+<p>It is a <var>float</var> that provides the processor temperature in degrees Celsius. This is both a class property and an instance property. In the first case, it is the global temperature, while in the second case it is the temperature of the instantiated CPU.</p>
+</section>
+
+<section>
+<h4 id="prp-CPU-thread">thread RO</h4>
+
+<p>It is an <var>int</var> that identifies the instantiated logical CPU.</p>
+</section>
+
+<section>
+<h4 id="mth-CPU-get_cpus">get_cpus(*, auto=False, offline=False, online=False, possible=False, present=False)</h4>
+
+<p>This is a class method (not an instance method) that returns a tuple of logical CPUs according to the selected criteria: <var>offline</var> CPUs that are present but disabled, <var>online</var> CPUs that are present and enabled, <var>possible</var> CPUs that could theoretically be available at some point, and <var>present</var> CPUs that are currently present whether enabled or not. The <var>auto</var> parameter is a boolean that tells whether the tuple should contain already instantiated CPUs. If it is <var>True</var>, the tuple contains the instantiated CPUs. Otherwise, it contains CPU identifiers.</p>
+</section>
+
+<section>
+<pre><code>
+import eva, random, time
+
+def arbitrary_task():
+    time.sleep(random.uniform(eva.SECOND, eva.SECOND * 5))
+
+eva.CPU.interval = eva.SECOND
+
+for _ in range(4):
+    print(eva.CPU.load)
+    arbitrary_task()
+
+eva.CPU.interval = False
+
+print()
+
+while True:
+    print(f'{eva.CPU.temperature} {eva.CPU.load}')
+
+    for cpu in eva.CPU.get_cpus(auto=True, online=True):
+        print(f' {cpu.thread}: {cpu.temperature} {cpu.load}')
+
+    print()
+
+    time.sleep(eva.SECOND)
+</code></pre>
+</section>
+</article>
+
+
+
+
+<article>
+<section>
 <h4 id="cls-Latch">Latch(path, /, *, auto=False, pid=None, socket=False)</h4>
 
 <p>This class implements an inter-process locking mechanism based on a given resource, so that only one instance can acquire it (the first one that succeeds) and then claim ownership of it.</p>
@@ -1186,7 +1311,6 @@ with eva.Latch(path) as l1:
             with eva.Latch(path, socket=True) as l4:
                 print(l1.status, l2.status, l3.status, l4.status)
 </code></pre>
-
 </section>
 </article>
 
