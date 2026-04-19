@@ -910,6 +910,469 @@ class Chrono:
 
 
 
+class _metaclass_CPU(type):
+    _break_engine        = M.threading.Event()
+    _chrono              = Chrono(timeout=0.0)
+    _fingerprint         = tuple()
+    _interval            = False
+    _lock                = M.threading.RLock()
+    _minimum_interval    = SECOND / 10
+    _monitors            = []
+    _pathf_offline       = '/sys/devices/system/cpu/offline'
+    _pathf_online        = '/sys/devices/system/cpu/online'
+    _pathf_possible      = '/sys/devices/system/cpu/possible'
+    _pathf_present       = '/sys/devices/system/cpu/present'
+    _previous_load       = dict()
+    _regex_fname_input   = M.re.compile(r'^temp(0|[1-9][0-9]*)_input$')
+    _regex_label_ccd     = M.re.compile(r'^Tccd(0|[1-9][0-9]*)$')
+    _regex_label_core    = M.re.compile(r'^Core (0|[1-9][0-9]*)$')
+    _regex_label_package = M.re.compile(r'^Package id (0|[1-9][0-9]*)$')
+    _regex_label_tdie    = M.re.compile(r'^Tdie$')
+    _regex_stat          = M.re.compile(r'^cpu( |0|[1-9][0-9]*)( (0|[1-9][0-9]*)){10,}$')
+    _sensors             = dict()
+    _thread_engine       = M.threading.Thread()
+
+
+    def _fget_interval(cls, /):
+        return cls._interval
+
+
+    def _fget_load(cls, /):
+        return cls._calc_load_from_stat(None)
+
+
+    def _fget_temperature(cls, /):
+        return cls._calc_temperature_from_sensors(None)
+
+
+    def _fset_interval(cls, value, /):
+        if value is not False:
+            value = normalize_float(value, minimum=cls._minimum_interval)
+
+        with cls._lock:
+            cls._interval = value
+
+            if cls._thread_engine.is_alive():
+                cls._break_engine.set()
+            elif cls.interval:
+                cls._thread_engine = M.threading.Thread(daemon=True, target=cls._target_engine)
+
+                cls._thread_engine.start()
+
+
+    interval    = property(fget=_fget_interval, fset=_fset_interval)
+    load        = property(fget=_fget_load)
+    temperature = property(fget=_fget_temperature)
+
+
+    def _calc_frequency_from_file(cls, path, /):
+        content = cls._read_file_without_trailing(path)
+        divisor = 1000
+        minimum = 0.0
+        ret     = minimum
+
+        if content is not False and content.isdigit():
+            ret = int(content) / divisor
+            ret = max(ret, minimum)
+
+        return ret
+
+
+    def _calc_load_from_stat(cls, thread, /):
+        empty        = ''
+        get_template = lambda: M.types.SimpleNamespace(busy=0, load=0.0, total=0)
+        dummy        = get_template()
+        names        = ('user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq', 'steal', 'guest', 'guest_nice')
+        pathf_stat   = '/proc/stat'
+        prefix       = 'cpu'
+        thread       = cls._normalize_if_thread(thread)
+
+        if cls._chrono.expired:
+            content  = read_text_file(pathf_stat)
+            current  = dict()
+            snapshot = cls._previous_load
+
+            if content is not False:
+                for line in content.split(M.os.linesep):
+                    if not cls._regex_stat.fullmatch(line):
+                        break
+
+                    split  = line.split()
+                    cpu    = split.pop(0).removeprefix(prefix)
+                    cpu    = None if cpu == empty else int(cpu)
+                    values = split[:len(names)]
+                    values = list(map(int, values))
+                    fields = dict(zip(names, values))
+
+                    curr = current[cpu] = get_template()
+
+                    curr.total = sum(values) - fields['guest'] - fields['guest_nice']
+                    curr.busy  = curr.total  - fields['idle']  - fields['iowait']
+
+                    if cpu in snapshot:
+                        prev = snapshot[cpu]
+
+                        try:
+                            curr.load = (curr.busy - prev.busy) / (curr.total - prev.total) * 100
+                            curr.load = clamp(curr.load, minimum=0.0, maximum=100.0)
+                        except ZeroDivisionError:
+                            curr.load = prev.load
+
+                with cls._lock:
+                    cls._chrono        = Chrono(timeout=cls._minimum_interval)
+                    cls._previous_load = current
+
+        return cls._previous_load.get(thread, dummy).load
+
+
+    def _calc_temperature_from_sensors(cls, thread, /):
+        divisor      = 1000
+        minimum      = 0.0
+        temperatures = [minimum]
+        thread       = cls._normalize_if_thread(thread)
+
+        with cls._lock:
+            cls._refresh_cache_if_needed()
+
+            if thread in cls._sensors:
+                sensors = cls._sensors[thread]
+            elif thread is None:
+                sensors = cls._sensors[thread] = cls._select_common_sensors()
+            else:
+                sensors = cls._sensors[thread] = cls._select_thread_sensors(thread)
+
+        for path in sensors:
+            content = cls._read_file_without_trailing(path)
+
+            if content is not False and content.isdigit():
+                temperature = int(content) / divisor
+                temperature = max(temperature, minimum)
+
+                temperatures.append(temperature)
+
+        return max(temperatures)
+
+
+    def _detect_monitors(cls, /):
+        drivers_amd      = ('k10temp', 'zenpower')
+        drivers_intel    = ('coretemp',)
+        drivers_rpi      = ('cpu_thermal',)
+        drivers          = drivers_amd + drivers_intel + drivers_rpi
+        fname_name       = 'name'
+        fstr_label       = 'temp{}_label'
+        glob_fname_input = 'temp*_input'
+        glob_fname_label = 'temp*_label'
+        glob_pathd_hwmon = '/sys/class/hwmon/hwmon*/'
+        natural_sort     = lambda p: int(cls._regex_fname_input.search(M.os.path.basename(p)).group(1))
+        purge_and_sort   = lambda l: sorted([ p for p in l if path_is_file(p, follow=False) ], key=natural_sort)
+        ret              = []
+
+        for pathd_hwmon in M.glob.glob(glob_pathd_hwmon):
+            pathd_hwmon = normalize_path(pathd_hwmon, trailing=True)
+            pathf_name  = normalize_path(pathd_hwmon, fname_name)
+
+            if (driver := cls._read_file_without_trailing(pathf_name)) is False:
+                continue
+            elif driver not in drivers:
+                continue
+
+            monitor         = M.types.SimpleNamespace()
+            monitor.ccd     = M.collections.defaultdict(list)
+            monitor.core    = M.collections.defaultdict(list)
+            monitor.main    = []
+            monitor.package = M.collections.defaultdict(list)
+            monitor.unknown = []
+
+            for fname_input in M.glob.glob(glob_fname_input, root_dir=pathd_hwmon):
+                if result := cls._regex_fname_input.search(fname_input):
+                    reference = result.group(1)
+                else:
+                    continue
+
+                pathf_input = normalize_path(pathd_hwmon, fname_input)
+                pathf_label = normalize_path(pathd_hwmon, fstr_label.format(reference))
+                label       = cls._read_file_without_trailing(pathf_label)
+                where       = monitor.unknown
+
+                if label is not False:
+                    if result := cls._regex_label_core.search(label):
+                        index = int(result.group(1))
+                        where = monitor.core[index]
+                    elif result := cls._regex_label_package.search(label):
+                        index = int(result.group(1))
+                        where = monitor.package[index]
+                    elif result := cls._regex_label_ccd.search(label):
+                        index = int(result.group(1))
+                        where = monitor.ccd[index]
+                    elif cls._regex_label_tdie.fullmatch(label):
+                        where = monitor.main
+                elif driver in drivers_rpi:
+                    where = monitor.main
+
+                where.append(pathf_input)
+
+            ret.append(monitor)
+
+        for monitor in ret:
+            monitor.ccd     = { k: purge_and_sort(v) for k, v in sorted(monitor.ccd.items()) }
+            monitor.core    = { k: purge_and_sort(v) for k, v in sorted(monitor.core.items()) }
+            monitor.main    = purge_and_sort(monitor.main)
+            monitor.package = { k: purge_and_sort(v) for k, v in sorted(monitor.package.items()) }
+            monitor.unknown = purge_and_sort(monitor.unknown)
+
+        return ret
+
+
+    def _get_topology(cls, thread, /):
+        fname_core          = 'core_id'
+        fname_die           = 'die_id'
+        fname_package       = 'physical_package_id'
+        fstr_pathd_topology = '/sys/devices/system/cpu/cpu{}/topology'
+        thread              = normalize_integer(thread, minimum=0)
+        pathd_topology      = fstr_pathd_topology.format(thread)
+        ret                 = M.types.SimpleNamespace(core=None, die=None, package=None, thread=thread)
+
+        if path_is_dir(pathd_topology, follow=False):
+            pathf_core    = normalize_path(pathd_topology, fname_core)
+            pathf_die     = normalize_path(pathd_topology, fname_die)
+            pathf_package = normalize_path(pathd_topology, fname_package)
+
+            if (core := cls._read_file_without_trailing(pathf_core)) is not False:
+                if core.isdigit():
+                    ret.core = int(core)
+
+            if (die := cls._read_file_without_trailing(pathf_die)) is not False:
+                if die.isdigit():
+                    ret.die = int(die)
+
+            if (package := cls._read_file_without_trailing(pathf_package)) is not False:
+                if package.isdigit():
+                    ret.package = int(package)
+
+        return ret
+
+
+    def _normalize_if_thread(cls, thread, /):
+        if thread is not None:
+            thread = normalize_integer(thread, minimum=0)
+
+        return thread
+
+
+    def _read_file_without_trailing(cls, path, /):
+        ret = read_text_file(path)
+
+        if ret is not False:
+            ret = ret.removesuffix(M.os.linesep)
+
+        return ret
+
+
+    def _refresh_cache_if_needed(cls, /):
+        glob_pathd_hwmon = '/sys/class/hwmon/hwmon*/'
+        monitors         = sorted(M.glob.glob(glob_pathd_hwmon))
+        present          = read_text_file(cls._pathf_present)
+        fingerprint      = (tuple(monitors), present)
+
+        with cls._lock:
+            if cls._fingerprint != fingerprint:
+                cls._fingerprint = fingerprint
+                cls._monitors    = cls._detect_monitors()
+                cls._sensors     = dict()
+
+
+    def _select_common_sensors(cls, /):
+        monitors = cls._monitors
+        ret      = []
+
+        for monitor in monitors:
+            ret.extend(monitor.main)
+
+        if not ret:
+            for monitor in monitors:
+                [ ret.extend(i) for i in monitor.package.values() ]
+
+        if not ret:
+            for monitor in monitors:
+                [ ret.extend(i) for i in monitor.ccd.values() ]
+
+        if not ret:
+            for monitor in monitors:
+                [ ret.extend(i) for i in monitor.core.values() ]
+
+        if not ret:
+            for monitor in monitors:
+                ret.extend(monitor.unknown)
+
+        return tuple(ret)
+
+
+    def _select_thread_sensors(cls, thread, /):
+        monitors = cls._monitors
+        ret      = []
+        thread   = normalize_integer(thread, minimum=0)
+        topology = cls._get_topology(thread)
+
+        for monitor in monitors:
+            if topology.package in monitor.package:
+                if topology.core in monitor.core:
+                    ret.extend(monitor.core[topology.core])
+                else:
+                    ret.extend(monitor.package[topology.package])
+
+        if not ret:
+            for monitor in monitors:
+                ret.extend(monitor.main)
+
+        if not ret:
+            for monitor in monitors:
+                if topology.core in monitor.core:
+                    ret.extend(monitor.core[topology.core])
+
+        if not ret:
+            for monitor in monitors:
+                [ ret.extend(i) for i in monitor.ccd.values() ]
+
+        if not ret:
+            for monitor in monitors:
+                ret.extend(monitor.unknown)
+
+        return tuple(ret)
+
+
+    def _target_engine(cls, /):
+        while True:
+            with cls._lock:
+                if cls.interval is False:
+                    return
+                else:
+                    interval = cls.interval
+                    cls._break_engine.clear()
+
+            while not cls._break_engine.is_set():
+                cls._calc_load_from_stat(None)
+                cls._break_engine.wait(interval)
+
+
+    def get_cpus(cls, /, *, auto=False, offline=False, online=False, possible=False, present=False):
+        auto      = bool(auto)
+        offline   = bool(offline)
+        online    = bool(online)
+        paths     = []
+        possible  = bool(possible)
+        present   = bool(present)
+        ret       = []
+        sep_field = ','
+        sep_range = '-'
+
+        if offline:
+            paths.append(cls._pathf_offline)
+
+        if online:
+            paths.append(cls._pathf_online)
+
+        if possible:
+            paths.append(cls._pathf_possible)
+
+        if present:
+            paths.append(cls._pathf_present)
+
+        for path in paths:
+            content = cls._read_file_without_trailing(path)
+
+            if content is not False:
+                for field in content.split(sep_field):
+                    if sep_range in field:
+                        first, last = field.split(sep_range, maxsplit=1)
+
+                        if first.isdigit() and last.isdigit():
+                            ret += range(int(first), int(last) + 1)
+                    elif field.isdigit():
+                        ret.append(int(field))
+
+        ret = set(ret)
+        ret = sorted(ret)
+
+        return tuple( cls(i) for i in ret ) if auto else tuple(ret)
+
+
+
+
+class CPU(metaclass=_metaclass_CPU):
+    def _fget_frequency(self, /):
+        cls  = self.__class__
+        path = f'/sys/devices/system/cpu/cpu{self.thread}/cpufreq/scaling_cur_freq'
+
+        return cls._calc_frequency_from_file(path)
+
+
+    def _fget_load(self, /):
+        return self.__class__._calc_load_from_stat(self.thread)
+
+
+    def _fget_maxfreq(self, /):
+        cls  = self.__class__
+        path = f'/sys/devices/system/cpu/cpu{self.thread}/cpufreq/cpuinfo_max_freq'
+
+        return cls._calc_frequency_from_file(path)
+
+
+    def _fget_maxscal(self, /):
+        cls  = self.__class__
+        path = f'/sys/devices/system/cpu/cpu{self.thread}/cpufreq/scaling_max_freq'
+
+        return cls._calc_frequency_from_file(path)
+
+
+    def _fget_minfreq(self, /):
+        cls  = self.__class__
+        path = f'/sys/devices/system/cpu/cpu{self.thread}/cpufreq/cpuinfo_min_freq'
+
+        return cls._calc_frequency_from_file(path)
+
+
+    def _fget_minscal(self, /):
+        cls  = self.__class__
+        path = f'/sys/devices/system/cpu/cpu{self.thread}/cpufreq/scaling_min_freq'
+
+        return cls._calc_frequency_from_file(path)
+
+
+    def _fget_online(self, /):
+        return self.thread in self.__class__.get_cpus(online=True)
+
+
+    def _fget_temperature(self, /):
+        return self.__class__._calc_temperature_from_sensors(self.thread)
+
+
+    def _fget_thread(self, /):
+        return self._thread
+
+
+    frequency   = property(fget=_fget_frequency)
+    load        = property(fget=_fget_load)
+    maxfreq     = property(fget=_fget_maxfreq)
+    maxscal     = property(fget=_fget_maxscal)
+    minfreq     = property(fget=_fget_minfreq)
+    minscal     = property(fget=_fget_minscal)
+    online      = property(fget=_fget_online)
+    temperature = property(fget=_fget_temperature)
+    thread      = property(fget=_fget_thread)
+
+
+    def __init__(self, thread, /):
+        cls    = self.__class__
+        thread = normalize_integer(thread, minimum=0)
+
+        if thread not in cls.get_cpus(possible=True):
+            raise ValueError
+
+        self._thread = thread
+
+
+
+
 class Latch:
     def _fget_path(self, /):
         return self._path
