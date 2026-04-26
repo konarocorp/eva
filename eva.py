@@ -74,8 +74,9 @@ M = _module_namespace_builder_closure()
 
 
 
-def _get_content_from_file(path, /, *, binary, lock):
+def _get_content_from_file(path, /, *, binary, chomp, lock):
     binary = bool(binary)
+    chomp  = bool(chomp)
     lock   = bool(lock)
     path   = normalize_path(path)
     ret    = False
@@ -86,6 +87,9 @@ def _get_content_from_file(path, /, *, binary, lock):
                 M.fcntl.flock(fd, M.fcntl.LOCK_SH)
 
             ret = fd.read()
+
+        if chomp:
+            ret = ret.removesuffix(M.os.linesep.encode())
 
         if not binary:
             ret = ret.decode(encoding='utf-8', errors='replace')
@@ -694,13 +698,13 @@ def randomize_ip(address, /, *, network=False, seed=None):
 
 
 def read_binary_file(path, /, *, lock=False):
-    return _get_content_from_file(path, binary=True, lock=lock)
+    return _get_content_from_file(path, binary=True, chomp=False, lock=lock)
 
 
 
 
-def read_text_file(path, /, *, lock=False):
-    return _get_content_from_file(path, binary=False, lock=lock)
+def read_text_file(path, /, *, chomp=False, lock=False):
+    return _get_content_from_file(path, binary=False, chomp=chomp, lock=lock)
 
 
 

@@ -345,7 +345,7 @@ print(logger.type)
 <section>
 <h4 id="fnc-append_file">append_file(path, content, /, *, eol=False, lock=False)</h4>
 <h4 id="fnc-read_binary_file">read_binary_file(path, /, *, lock=False)</h4>
-<h4 id="fnc-read_text_file">read_text_file(path, /, *, lock=False)</h4>
+<h4 id="fnc-read_text_file">read_text_file(path, /, *, chomp=False, lock=False)</h4>
 <h4 id="fnc-write_file">write_file(path, content, /, *, exclusive=False, lock=False)</h4>
 
 <p>They allow reading from and writing to files.</p>
@@ -358,7 +358,7 @@ print(logger.type)
 
 <p>The <var>write_file</var> function fully replaces the previous content. Setting the <var>exclusive</var> parameter to <var>True</var> prevents writing if the file already exists.</p>
 
-<p>The <var>read_binary_file</var> and <var>read_text_file</var> functions are used to read data. The first returns the content as a <var>bytes</var> object. The second returns it as <var>str</var> and assumes UTF-8 encoding with <var>replace</var> as the error handler.</p>
+<p>The <var>read_binary_file</var> and <var>read_text_file</var> functions are used to read data. The first returns the content as a <var>bytes</var> object. The second returns it as <var>str</var> and assumes UTF-8 encoding with <var>replace</var> as the error handler. If the <var>chomp</var> parameter is set to <var>True</var>, the newline character is removed if it appears at the end of the content.</p>
 
 <p>In multithreaded or multiprocess programs, concurrent reads or writes on the same file may corrupt its contents. To avoid this, the <var>lock</var> parameter can be set to <var>True</var>, which applies an operating-system-level lock (<var>fcntl.flock</var>) before the read or write operation.</p>
 
