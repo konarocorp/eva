@@ -970,7 +970,7 @@ class _metaclass_CPU(type):
 
 
     def _calc_frequency_from_file(cls, path, /):
-        content = cls._read_file_without_trailing(path)
+        content = read_text_file(path, chomp=True)
         divisor = 1000
         minimum = 0.0
         ret     = minimum
@@ -1046,7 +1046,7 @@ class _metaclass_CPU(type):
                 sensors = cls._sensors[thread] = cls._select_thread_sensors(thread)
 
         for path in sensors:
-            content = cls._read_file_without_trailing(path)
+            content = read_text_file(path, chomp=True)
 
             if content is not False and content.isdigit():
                 temperature = int(content) / divisor
@@ -1075,7 +1075,7 @@ class _metaclass_CPU(type):
             pathd_hwmon = normalize_path(pathd_hwmon, trailing=True)
             pathf_name  = normalize_path(pathd_hwmon, fname_name)
 
-            if (driver := cls._read_file_without_trailing(pathf_name)) is False:
+            if (driver := read_text_file(pathf_name, chomp=True)) is False:
                 continue
             elif driver not in drivers:
                 continue
@@ -1095,7 +1095,7 @@ class _metaclass_CPU(type):
 
                 pathf_input = normalize_path(pathd_hwmon, fname_input)
                 pathf_label = normalize_path(pathd_hwmon, fstr_label.format(reference))
-                label       = cls._read_file_without_trailing(pathf_label)
+                label       = read_text_file(pathf_label, chomp=True)
                 where       = monitor.unknown
 
                 if label is not False:
@@ -1141,15 +1141,15 @@ class _metaclass_CPU(type):
             pathf_die     = normalize_path(pathd_topology, fname_die)
             pathf_package = normalize_path(pathd_topology, fname_package)
 
-            if (core := cls._read_file_without_trailing(pathf_core)) is not False:
+            if (core := read_text_file(pathf_core, chomp=True)) is not False:
                 if core.isdigit():
                     ret.core = int(core)
 
-            if (die := cls._read_file_without_trailing(pathf_die)) is not False:
+            if (die := read_text_file(pathf_die, chomp=True)) is not False:
                 if die.isdigit():
                     ret.die = int(die)
 
-            if (package := cls._read_file_without_trailing(pathf_package)) is not False:
+            if (package := read_text_file(pathf_package, chomp=True)) is not False:
                 if package.isdigit():
                     ret.package = int(package)
 
@@ -1161,15 +1161,6 @@ class _metaclass_CPU(type):
             thread = normalize_integer(thread, minimum=0)
 
         return thread
-
-
-    def _read_file_without_trailing(cls, path, /):
-        ret = read_text_file(path)
-
-        if ret is not False:
-            ret = ret.removesuffix(M.os.linesep)
-
-        return ret
 
 
     def _refresh_cache_if_needed(cls, /):
@@ -1282,9 +1273,7 @@ class _metaclass_CPU(type):
             paths.append(cls._pathf_present)
 
         for path in paths:
-            content = cls._read_file_without_trailing(path)
-
-            if content is not False:
+            if (content := read_text_file(path, chomp=True)) is not False:
                 for field in content.split(sep_field):
                     if sep_range in field:
                         first, last = field.split(sep_range, maxsplit=1)
