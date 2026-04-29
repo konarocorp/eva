@@ -269,28 +269,26 @@ def dir_is_empty(path, /):
 
 
 def get_interfaces(*, down=True, loopback=True, up=True):
-    dots      = ('.', '..')
-    down      = bool(down)
-    loopback  = bool(loopback)
-    regex     = f'^0x[0-9a-f]+{M.re.escape(M.os.linesep)}$'
-    ret       = []
-    separator = M.os.path.sep
-    template  = '/sys/class/net/{name}/flags'
-    up        = bool(up)
+    dots             = ('.', '..')
+    down             = bool(down)
+    fstr_pathf_flags = '/sys/class/net/{}/flags'
+    loopback         = bool(loopback)
+    regex            = f'^0x[0-9A-Fa-f]+$'
+    ret              = []
+    up               = bool(up)
 
     interfaces = [ i[1] for i in M.socket.if_nameindex() ]
-    interfaces = [ i for i in interfaces if i not in dots and separator not in i ]
-    interfaces = sorted(set(interfaces), key=str.lower)
+    interfaces = [ i for i in interfaces if i not in dots ]
+    interfaces = [ i for i in interfaces if M.os.path.sep not in i ]
 
-    for name in interfaces:
-        path    = template.format(name=name)
-        path    = normalize_path(path, absolute=True)
-        content = read_text_file(path)
+    for interface in interfaces:
+        path    = fstr_pathf_flags.format(interface)
+        content = read_text_file(path, chomp=True)
 
-        if content is False or not M.re.fullmatch(regex, content, flags=M.re.IGNORECASE):
+        if content is False or not M.re.fullmatch(regex, content):
             continue
 
-        flags = int(content.strip(), base=16)
+        flags = int(content, base=16)
 
         if not down and not (flags & 0x1):
             continue
@@ -301,9 +299,13 @@ def get_interfaces(*, down=True, loopback=True, up=True):
         if not up and (flags & 0x1):
             continue
 
-        ret.append(name)
+        ret.append(interface)
 
-    return tuple(ret)
+    ret = set(ret)
+    ret = sorted(ret)
+    ret = tuple(ret)
+
+    return ret
 
 
 
