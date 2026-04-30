@@ -51,7 +51,7 @@ def _module_namespace_builder_closure():
                     attribute      = property(fget=getter)
                     bases          = (cls,)
                     body           = {}
-                    label          = cls.__name__.partition(separator)[0] + separator + namespace
+                    label          = cls.__name__.partition(separator)[0] + separator + module.__name__
                     self.__class__ = type(label, bases, body)
 
                     setattr(self.__class__, name, attribute)
