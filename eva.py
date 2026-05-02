@@ -46,20 +46,22 @@ def _module_namespace_builder_closure():
             allowed   = not ban.fullmatch(name) or namespace in whitelist
 
             if hasattr(module, name): # attribute
+                getter = lambda *_, **__: getattr(module, name)
+
                 if allowed:
-                    getter         = lambda *_, **__: getattr(module, name)
-                    attribute      = property(fget=getter)
-                    bases          = (cls,)
-                    body           = {}
-                    label          = cls.__name__.partition(separator)[0] + separator + module.__name__
-                    self.__class__ = type(label, bases, body)
+                    proxy = property(fget=getter)
 
-                    setattr(self.__class__, name, attribute)
+                    setattr(cls, name, proxy)
 
-                return getattr(module, name)
+                return getter()
             elif allowed: # module/submodule
                 arguments = namespace.split(separator)
-                ret       = cls(*arguments)
+                base      = cls.__mro__[-2]
+                bases     = (base,)
+                body      = {}
+                label     = base.__name__ + separator + namespace
+                proxy     = type(label, bases, body)
+                ret       = proxy(*arguments)
 
                 setattr(self, name, ret)
 
