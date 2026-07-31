@@ -40,7 +40,7 @@
 
 <article>
 <section>
-<h3>What is M?</h3>
+<h3>What is M? And what is N?</h3>
 
 <p>Before explaining what <var>M</var> is, it is important to say why it is documented at all. In fact, it is not meant to be a public feature. But this variable is so special, and so widely used inside Eva’s source code, that it needs to be explained.</p>
 
@@ -49,6 +49,8 @@
 <p>Many people will ask… why? The answer is also simple: because it feels more comfortable and cleaner to write code this way. The global namespace is not filled with names that may collide with others, and modules are loaded only when they are needed.</p>
 
 <p>Do not use this in your own code. Normal module imports are good and reliable.</p>
+
+<p>Something similar happens with the <var>N</var> variable: it is not meant to be a public feature either, and it is widely used throughout Eva's source code. This variable is literally just an alias for <var>M.types.SimpleNamespace</var>. Nothing else.</p>
 </section>
 </article>
 
