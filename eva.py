@@ -1,4 +1,4 @@
-VERSION = '0.260521'
+VERSION = '0.260731'
 
 SECOND = 1.0
 MINUTE = SECOND * 60
@@ -73,7 +73,11 @@ def _module_namespace_builder_closure():
 
     return _module_namespace_builder_Class()
 
+
+
+
 M = _module_namespace_builder_closure()
+N = M.types.SimpleNamespace
 
 
 
@@ -176,7 +180,7 @@ def append_file(path, content, /, *, eol=False, lock=False):
 
 
 def check_internet(*, ipv4=True, ipv6=True, retries=None, timeout=None):
-    families = {'ipv4': M.types.SimpleNamespace(), 'ipv6': M.types.SimpleNamespace()}
+    families = {'ipv4': N(), 'ipv6': N()}
     ipv4     = bool(ipv4)
     ipv6     = bool(ipv6)
     retries  = 1      if retries is None else normalize_integer(retries, minimum=0)
@@ -317,7 +321,7 @@ def get_interfaces(*, down=True, loopback=True, up=True):
 def get_timestamp(epoch=None, /, *, utc=False):
     empty     = ''
     epoch     = M.time.time() if epoch is None else normalize_float(epoch, minimum=0.0)
-    ret       = M.types.SimpleNamespace()
+    ret       = N()
     template  = '%Y/%m/%d-%H:%M:%S.%f%z'
     utc       = bool(utc)
     tz        = M.datetime.timezone.utc if utc else None
@@ -780,7 +784,7 @@ def run(command, /, *, binary=False, cwd=None, stdin=None, timeout=None, zen=Tru
     errors    = 'replace'
     exception = None
     options   = {}
-    ret       = M.types.SimpleNamespace()
+    ret       = N()
     stderr    = bytes()
     stdout    = bytes()
     zen       = bool(zen)
@@ -990,7 +994,7 @@ class _metaclass_CPU(type):
 
     def _calc_load_from_stat(cls, thread, /):
         empty        = ''
-        get_template = lambda: M.types.SimpleNamespace(busy=0, load=0.0, total=0)
+        get_template = lambda: N(busy=0, load=0.0, total=0)
         dummy        = get_template()
         names        = ('user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq', 'steal', 'guest', 'guest_nice')
         pathf_stat   = '/proc/stat'
@@ -1086,7 +1090,7 @@ class _metaclass_CPU(type):
             elif driver not in drivers:
                 continue
 
-            monitor         = M.types.SimpleNamespace()
+            monitor         = N()
             monitor.ccd     = M.collections.defaultdict(list)
             monitor.core    = M.collections.defaultdict(list)
             monitor.main    = []
@@ -1140,7 +1144,7 @@ class _metaclass_CPU(type):
         fstr_pathd_topology = '/sys/devices/system/cpu/cpu{}/topology'
         thread              = normalize_integer(thread, minimum=0)
         pathd_topology      = fstr_pathd_topology.format(thread)
-        ret                 = M.types.SimpleNamespace(core=None, die=None, package=None, thread=thread)
+        ret                 = N(core=None, die=None, package=None, thread=thread)
 
         if path_is_dir(pathd_topology, follow=False):
             pathf_core    = normalize_path(pathd_topology, fname_core)
@@ -1665,12 +1669,12 @@ class LoggerType(M.enum.Enum):
 
     def __init__(self, flag, /):
         members = {
-            1:  M.types.SimpleNamespace(color='1;33', stderr=False),
-            2:  M.types.SimpleNamespace(color='1;36', stderr=True),
-            4:  M.types.SimpleNamespace(color='1;31', stderr=True),
-            8:  M.types.SimpleNamespace(color='1;35', stderr=True),
-            16: M.types.SimpleNamespace(color='1;34', stderr=False),
-            32: M.types.SimpleNamespace(color='1;32', stderr=False),
+            1:  N(color='1;33', stderr=False),
+            2:  N(color='1;36', stderr=True),
+            4:  N(color='1;31', stderr=True),
+            8:  N(color='1;35', stderr=True),
+            16: N(color='1;34', stderr=False),
+            32: N(color='1;32', stderr=False),
         }
 
         if flag not in members:
@@ -1949,7 +1953,7 @@ class Terminal(metaclass=_metaclass_Terminal):
 
 
     def _get_terminal_size(self, /):
-        fallback = M.types.SimpleNamespace(height=1, width=1)
+        fallback = N(height=1, width=1)
         fd       = self.stream.fileno()
         height   = 0
         width    = 0
@@ -1963,7 +1967,7 @@ class Terminal(metaclass=_metaclass_Terminal):
         if not width:
             width = fallback.width
 
-        return M.types.SimpleNamespace(height=height, width=width)
+        return N(height=height, width=width)
 
 
     def _print(self, *args, **kwargs):
@@ -2345,7 +2349,7 @@ class Spinner(metaclass=_metaclass_Spinner):
     def __init__(self, /, *, auto=False, colors=None, glyphs=None, message=None, tempo=None):
         auto                = bool(auto)
         cls                 = self.__class__
-        self._animation     = M.types.SimpleNamespace()
+        self._animation     = N()
         self._instance_lock = M.threading.RLock()
         self.colors         = cls._default_colors  if colors  is None else colors
         self.glyphs         = cls._default_glyphs  if glyphs  is None else glyphs
