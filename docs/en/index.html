@@ -152,7 +152,7 @@
     <li><a href="#cls">classes</a>
         <ul>
             <li><a href="#cls-Chrono">Chrono</a>:
-            <a href="#prp-Chrono-delta">delta</a>,
+            <a href="#prp-Chrono-elapsed">elapsed</a>,
             <a href="#prp-Chrono-expired">expired</a>,
             <a href="#prp-Chrono-precision">precision</a>,
             <a href="#prp-Chrono-remaining">remaining</a>,
@@ -1083,17 +1083,19 @@ else:
 
 <article>
 <section>
-<h4 id="cls-Chrono">Chrono(*, precision=False, timeout=False)</h4>
+<h4 id="cls-Chrono">Chrono(*, expired=False, precision=False, timeout=False)</h4>
 
 <p>This class can be used as a stopwatch or as a timer. It provides access to the elapsed time or the remaining time until a limit is reached. It works with a monotonic counter, which makes it immune to changes in the system clock. The class uses a time resolution in seconds of type <var>float</var>, where the decimal part represents fractions of this base unit.</p>
 
 <p>The stopwatch starts at the moment of instantiation, but it can be reset later when needed, which allows the instance to be reused.</p>
 
+<p>If the <var>expired</var> parameter is set to <var>True</var>, the instance starts in an expired state. This only makes sense if <var>timeout</var> is specified.</p>
+
 <p>The <var>precision</var> and <var>timeout</var> parameters allow setting these properties at instantiation time.</p>
 </section>
 
 <section>
-<h4 id="prp-Chrono-delta">delta RO</h4>
+<h4 id="prp-Chrono-elapsed">elapsed RO</h4>
 
 <p>It provides the elapsed time according to <var>precision</var>. This is the base property for using the instance as a stopwatch.</p>
 </section>
@@ -1107,7 +1109,7 @@ else:
 <section>
 <h4 id="prp-Chrono-precision">precision RW</h4>
 
-<p>It specifies the rounding precision used when reading <var>delta</var> and <var>remaining</var>, as well as the one used to evaluate <var>expired</var>. It must be an <var>int</var> to indicate the number of decimal places, or <var>False</var> to disable this feature.</p>
+<p>It specifies the rounding precision used when reading <var>elapsed</var> and <var>remaining</var>, as well as the one used to evaluate <var>expired</var>. It must be an <var>int</var> to indicate the number of decimal places, or <var>False</var> to disable this feature.</p>
 </section>
 
 <section>
@@ -1123,9 +1125,9 @@ else:
 </section>
 
 <section>
-<h4 id="mth-Chrono-reset">reset()</h4>
+<h4 id="mth-Chrono-reset">reset(*, precision=None, timeout=None)</h4>
 
-<p>Resets the initial reference time used for the calculations.</p>
+<p>Resets the initial reference time used for the calculations. The <var>precision</var> and <var>timeout</var> parameters allow resetting these properties.</p>
 </section>
 
 <section>
@@ -1136,7 +1138,7 @@ chrono = eva.Chrono(precision=3, timeout=eva.SECOND / 2)
 
 while not chrono.expired:
     time.sleep(eva.SECOND / 10)
-    print(chrono.delta, chrono.remaining)
+    print(chrono.elapsed, chrono.remaining)
 </code></pre>
 </section>
 </article>
