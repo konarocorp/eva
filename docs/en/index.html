@@ -681,6 +681,7 @@ eva.noop('foo', bar='quux')
 args = ('foo', 'bar', 'quux')
 thread = threading.Thread(args=args, target=eva.noop)
 thread.start()
+thread.join()
 </code></pre>
 </section>
 </article>
