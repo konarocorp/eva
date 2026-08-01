@@ -1,4 +1,4 @@
-VERSION = '0.260731'
+VERSION = '0.260801'
 
 SECOND = 1.0
 MINUTE = SECOND * 60
@@ -849,88 +849,114 @@ def write_file(path, content, /, *, exclusive=False, lock=False):
 
 
 class Chrono:
-    def _fget_delta(self, /):
-        delta = self._calculate_raw_delta()
-        delta = self._round_if_precision(delta)
-
-        return delta
+    @property
+    def delta(self, /): # DEPRECATED
+        return self.elapsed
 
 
-    def _fget_expired(self, /):
+    @property
+    def elapsed(self, /):
+        with self._lock:
+            ret = self._calc_raw_delta()
+            ret = self._round_if_precision(ret)
+
+            return ret
+
+
+    @property
+    def expired(self, /):
         return not self.remaining
 
 
-    def _fget_precision(self, /):
-        return self._precision
+    @property
+    def precision(self, /):
+        with self._lock:
+            return self._precision
 
 
-    def _fget_remaining(self, /):
-        remaining = M.math.inf
+    @property
+    def remaining(self, /):
+        with self._lock:
+            if (timeout := self._timeout) is False:
+                ret = M.math.inf
+            else:
+                ret = max(timeout - self._calc_raw_delta(), 0.0)
+                ret = self._round_if_precision(ret)
 
-        if (timeout := self.timeout) is not False:
-            delta     = self._calculate_raw_delta()
-            remaining = max(timeout - delta, 0.0)
-            remaining = self._round_if_precision(remaining)
-
-        return remaining
-
-
-    def _fget_timeout(self, /):
-        return self._timeout
+            return ret
 
 
-    def _fset_precision(self, value, /):
-        if value is not False:
-            value = normalize_integer(value, minimum=0)
-
-        self._precision = value
-
-
-    def _fset_timeout(self, value, /):
-        if value is not False:
-            value = normalize_float(value, minimum=0.0)
-
-        self._timeout = value
+    @property
+    def timeout(self, /):
+        with self._lock:
+            return self._timeout
 
 
-    delta     = property(fget=_fget_delta)
-    expired   = property(fget=_fget_expired)
-    precision = property(fget=_fget_precision, fset=_fset_precision)
-    remaining = property(fget=_fget_remaining)
-    timeout   = property(fget=_fget_timeout,   fset=_fset_timeout)
+    @precision.setter
+    def precision(self, value, /):
+        with self._lock:
+            if value == M.math.inf:
+                value = False
+            elif value is not False:
+                value = normalize_integer(value, minimum=0)
+
+            self._precision = value
 
 
-    def __init__(self, /, *, precision=False, timeout=False):
+    @timeout.setter
+    def timeout(self, value, /):
+        with self._lock:
+            if value == M.math.inf:
+                value = False
+            elif value is not False:
+                value = normalize_float(value, minimum=0.0)
+
+            self._timeout = value
+
+
+    def __init__(self, /, *, expired=False, precision=False, timeout=False):
+        expired        = bool(expired)
+        self._lock     = M.threading.RLock()
         self.precision = precision
         self.timeout   = timeout
 
         self.reset()
 
+        if expired and self.timeout is not False:
+            self._start -= self.timeout
 
-    def _calculate_raw_delta(self, /):
+
+    def _calc_raw_delta(self, /):
         return M.time.monotonic() - self._start
 
 
     def _round_if_precision(self, value, /):
-        if (precision := self.precision) is not False:
+        if (precision := self._precision) is not False:
             value = normalize_float(value, precision=precision)
 
         return value
 
 
-    def reset(self, /):
-        self._start = M.time.monotonic()
+    def reset(self, /, *, precision=None, timeout=None):
+        with self._lock:
+            if precision is not None:
+                self.precision = precision
+
+            if timeout is not None:
+                self.timeout = timeout
+
+            self._start = M.time.monotonic()
 
 
 
 
 class _metaclass_CPU(type):
     _break_engine        = M.threading.Event()
-    _chrono              = Chrono(timeout=0.0)
     _fingerprint         = tuple()
     _interval            = False
     _lock                = M.threading.RLock()
     _minimum_interval    = SECOND / 10
+    _chrono              = Chrono(expired=True, timeout=_minimum_interval)
     _monitors            = []
     _pathf_offline       = '/sys/devices/system/cpu/offline'
     _pathf_online        = '/sys/devices/system/cpu/online'
@@ -1033,7 +1059,8 @@ class _metaclass_CPU(type):
                             curr.load = prev.load
 
                 with cls._lock:
-                    cls._chrono        = Chrono(timeout=cls._minimum_interval)
+                    cls._chrono.reset()
+
                     cls._previous_load = current
 
         return cls._previous_load.get(thread, dummy).load
