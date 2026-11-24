@@ -1,11 +1,19 @@
-VERSION = '0.261123'
+VERSION = '0.261124'
 
 SECOND      = 1.0
-MILLISECOND = SECOND / 1000
 MINUTE      = SECOND * 60
 HOUR        = MINUTE * 60
 DAY         = HOUR   * 24
 WEEK        = DAY    * 7
+MILLISECOND = SECOND / 1000
+
+BYTE = 1
+KIB  = BYTE * 1024
+MIB  = KIB  * 1024
+GIB  = MIB  * 1024
+TIB  = GIB  * 1024
+PIB  = TIB  * 1024
+EIB  = PIB  * 1024
 
 
 
@@ -1794,7 +1802,7 @@ class _metaclass_Reader(type):
 
     def _engine(cls, /):
         fd       = M.sys.__stdin__.fileno()
-        maximum  = 1024
+        maximum  = KIB
         settings = M.termios.tcgetattr(fd) if M.os.isatty(fd) else None
 
         try:

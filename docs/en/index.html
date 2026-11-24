@@ -62,13 +62,21 @@
 <ul>
     <li><a href="#cst">constants</a>
         <ul>
+            <li><a href="#cst-BYTE">BYTE</a>,
+            <a href="#cst-EIB">EIB</a>,
+            <a href="#cst-GIB">GIB</a>,
+            <a href="#cst-KIB">KIB</a>,
+            <a href="#cst-MIB">MIB</a>,
+            <a href="#cst-PIB">PIB</a>,
+            <a href="#cst-TIB">TIB</a></li>
+
             <li><a href="#cst-DAY">DAY</a>,
             <a href="#cst-HOUR">HOUR</a>,
             <a href="#cst-MILLISECOND">MILLISECOND</a>,
             <a href="#cst-MINUTE">MINUTE</a>,
             <a href="#cst-SECOND">SECOND</a>,
             <a href="#cst-WEEK">WEEK</a></li>
-            
+
             <li><a href="#cst-VERSION">VERSION</a></li>
 
             <li><a href="#cst-LoggerTimestamp">LoggerTimestamp</a>:
@@ -243,6 +251,29 @@
 
 
 <h2 id="cst">constants</h2>
+
+
+
+
+<article>
+<section>
+<h4 id="cst-BYTE">BYTE = 1</h4>
+<h4 id="cst-EIB">EIB = 1152921504606846976</h4>
+<h4 id="cst-GIB">GIB = 1073741824</h4>
+<h4 id="cst-KIB">KIB = 1024</h4>
+<h4 id="cst-MIB">MIB = 1048576</h4>
+<h4 id="cst-PIB">PIB = 1125899906842624</h4>
+<h4 id="cst-TIB">TIB = 1099511627776</h4>
+
+<p>They represent units of data size expressed in bytes. Their names follow the IEC binary prefixes. Using them makes the code clearer and avoids magic numbers.</p>
+
+<pre><code>
+import eva
+
+data = bytes(eva.KIB)
+</code></pre>
+</section>
+</article>
 
 
 
