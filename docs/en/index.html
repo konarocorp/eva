@@ -64,6 +64,7 @@
         <ul>
             <li><a href="#cst-DAY">DAY</a>,
             <a href="#cst-HOUR">HOUR</a>,
+            <a href="#cst-MILLISECOND">MILLISECOND</a>,
             <a href="#cst-MINUTE">MINUTE</a>,
             <a href="#cst-SECOND">SECOND</a>,
             <a href="#cst-WEEK">WEEK</a></li>
@@ -250,21 +251,20 @@
 <section>
 <h4 id="cst-DAY">DAY = 86400.0</h4>
 <h4 id="cst-HOUR">HOUR = 3600.0</h4>
+<h4 id="cst-MILLISECOND">MILLISECOND = 0.001</h4>
 <h4 id="cst-MINUTE">MINUTE = 60.0</h4>
 <h4 id="cst-SECOND">SECOND = 1.0</h4>
 <h4 id="cst-WEEK">WEEK = 604800.0</h4>
+
 <p>They represent units of time expressed in seconds. Using them makes the code clearer and avoids magic numbers.</p>
 
-<p>They are <var>float</var> because the second is the smallest time unit used in this project. Smaller values can be expressed as fractions of a second.</p>
+<p>The second is the reference unit in this project. Larger units are multiples of it, while smaller units are fractions of it. All these constants are <var>float</var> values to keep their type consistent.</p>
 
 <pre><code>
 import eva, time
 
-print('hello world!')
-
+time.sleep(eva.MILLISECOND * 500)
 time.sleep(eva.SECOND / 2)
-
-print('goodbye!')
 </code></pre>
 </section>
 </article>

@@ -1,10 +1,11 @@
-VERSION = '0.260801'
+VERSION = '0.261123'
 
-SECOND = 1.0
-MINUTE = SECOND * 60
-HOUR   = MINUTE * 60
-DAY    = HOUR   * 24
-WEEK   = DAY    * 7
+SECOND      = 1.0
+MILLISECOND = SECOND / 1000
+MINUTE      = SECOND * 60
+HOUR        = MINUTE * 60
+DAY         = HOUR   * 24
+WEEK        = DAY    * 7
 
 
 
@@ -955,7 +956,7 @@ class _metaclass_CPU(type):
     _fingerprint         = tuple()
     _interval            = False
     _lock                = M.threading.RLock()
-    _minimum_interval    = SECOND / 10
+    _minimum_interval    = MILLISECOND * 100
     _chrono              = Chrono(expired=True, timeout=_minimum_interval)
     _monitors            = []
     _pathf_offline       = '/sys/devices/system/cpu/offline'
@@ -1751,7 +1752,7 @@ class _metaclass_Reader(type):
     _class_lock     = M.threading.RLock()
     _eof            = False
     _thread         = M.threading.Thread()
-    _wait           = SECOND / 4
+    _wait           = MILLISECOND * 250
 
 
     def _fget_wait(cls, /):
@@ -2146,7 +2147,7 @@ class _metaclass_Spinner(type):
     _default_colors     = _default_colors + _default_colors[-2:0:-1]
     _default_glyphs     = ('|', '/', '—', '\\')
     _default_message    = ''
-    _default_tempo      = SECOND / 4
+    _default_tempo      = MILLISECOND * 250
     _hide_depth         = 0
     _template_colorful  = '\x1B[2K' + '\r\x1B[38;5;{color}m{glyph}\x1B[39m{separator}{message}\r'
     _template_colorless = '\x1B[2K' + '\r{glyph}{separator}{message}\r'
