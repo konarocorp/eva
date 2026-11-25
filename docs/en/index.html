@@ -198,11 +198,11 @@
 
             <li><a href="#cls-Reader">Reader</a>:
             <a href="#mth-Reader-bye">bye</a>,
+            <a href="#prp-Reader-interval">interval</a>,
             <a href="#mth-Reader-off">off</a>,
             <a href="#mth-Reader-on">on</a>,
             <a href="#mth-Reader-poll">poll</a>,
-            <a href="#prp-Reader-status">status</a>,
-            <a href="#prp-Reader-wait">wait</a></li>
+            <a href="#prp-Reader-status">status</a></li>
 
             <li><a href="#cls-Terminal">Terminal</a>:
             <a href="#prp-Terminal-brush">brush</a>,
@@ -232,14 +232,14 @@
             <a href="#mth-Spinner-bye">bye</a>,
             <a href="#prp-Spinner-colors">colors</a>,
             <a href="#prp-Spinner-current">current</a>,
-            <a href="#mth-Spinner-hide">hide</a>,
             <a href="#prp-Spinner-glyphs">glyphs</a>,
+            <a href="#mth-Spinner-hide">hide</a>,
+            <a href="#prp-Spinner-interval">interval</a>,
             <a href="#prp-Spinner-message">message</a>,
             <a href="#mth-Spinner-off">off</a>,
             <a href="#mth-Spinner-on">on</a>,
             <a href="#prp-Spinner-status">status</a>,
-            <a href="#prp-Spinner-stderr">stderr</a>,
-            <a href="#prp-Spinner-tempo">tempo</a></li>
+            <a href="#prp-Spinner-stderr">stderr</a></li>
         </ul>
     </li>
 </ul>
@@ -1459,15 +1459,15 @@ debug('my type is {type}', type=debug.type)
 </section>
 
 <section>
-<h4 id="prp-Reader-status">status RO</h4>
+<h4 id="prp-Reader-interval">interval RW</h4>
 
-<p>A boolean that shows the state of the instance. It is <var>True</var> when it is registered as active, or <var>False</var> otherwise.</p>
+<p>A class property (not an instance property) that sets the maximum wait time in seconds for each poll. Its default value is <var>0.25</var> seconds.</p>
 </section>
 
 <section>
-<h4 id="prp-Reader-wait">wait RW</h4>
+<h4 id="prp-Reader-status">status RO</h4>
 
-<p>A class property (not an instance property) that sets the maximum wait time in seconds for each poll. Its default value is <var>0.25</var> seconds.</p>
+<p>A boolean that shows the state of the instance. It is <var>True</var> when it is registered as active, or <var>False</var> otherwise.</p>
 </section>
 
 <section>
@@ -1491,7 +1491,7 @@ debug('my type is {type}', type=debug.type)
 <section>
 <h4 id="mth-Reader-poll">poll()</h4>
 
-<p>Removes and returns one chunk from its buffer. Since it is a FIFO queue, this chunk is the oldest one, not the newest. The chunk is a <var>bytes</var> object and is returned immediately. If the buffer is empty or the instance is not active, it waits for at most the number of seconds set by <var>wait</var>. When this time limit is reached, the return value is <var>None</var> to signal that there is still nothing captured. This method can also return <var>False</var> to signal that standard input has been fully consumed, so the instance can be deactivated. This happens when standard input is not an interactive terminal.</p>
+<p>Removes and returns one chunk from its buffer. Since it is a FIFO queue, this chunk is the oldest one, not the newest. The chunk is a <var>bytes</var> object and is returned immediately. If the buffer is empty or the instance is not active, it waits for at most the number of seconds set by <var>interval</var>. When this time limit is reached, the return value is <var>None</var> to signal that there is still nothing captured. This method can also return <var>False</var> to signal that standard input has been fully consumed, so the instance can be deactivated. This happens when standard input is not an interactive terminal.</p>
 </section>
 
 <section>
@@ -1657,7 +1657,7 @@ term.restore_cursor()
 
 <article>
 <section>
-<h4 id="cls-Spinner">Spinner(*, auto=False, colors=None, glyphs=None, message=None, tempo=None)</h4>
+<h4 id="cls-Spinner">Spinner(*, auto=False, colors=None, glyphs=None, interval=None, message=None)</h4>
 
 <p>This class manages spinner-style animations. During long-running tasks, these animations are useful to show visual feedback in the terminal.</p>
 
@@ -1675,7 +1675,7 @@ term.restore_cursor()
 
 <p>The <var>auto</var> parameter is a boolean that tells whether the spinner should be activated automatically at instantiation time.</p>
 
-<p>The <var>colors</var>, <var>glyphs</var>, <var>message</var> and <var>tempo</var> parameters allow setting these properties at instantiation time.</p>
+<p>The <var>colors</var>, <var>glyphs</var>, <var>interval</var> and <var>message</var> parameters allow setting these properties at instantiation time.</p>
 </section>
 
 <section>
@@ -1697,6 +1697,12 @@ term.restore_cursor()
 </section>
 
 <section>
+<h4 id="prp-Spinner-interval">interval RW</h4>
+
+<p>Defines the speed of the animation. It sets the interval in seconds between each frame. Its default value is <var>0.25</var> seconds.</p>
+</section>
+
+<section>
 <h4 id="prp-Spinner-message">message RW</h4>
 
 <p>Sets the message that goes with the animation. It is usually a <var>str</var>, but it can also be a function. In that case, the function is called on each frame and its return value is used as the message. In all cases, an empty string is allowed.</p>
@@ -1712,12 +1718,6 @@ term.restore_cursor()
 <h4 id="prp-Spinner-stderr">stderr RW</h4>
 
 <p>This is a class property (not an instance property) that sets the output target of the animation. It accepts <var>True</var> (its default value) to send the animation to standard error. It is <var>False</var> for standard output. The animation is only shown if the target is an interactive terminal.</p>
-</section>
-
-<section>
-<h4 id="prp-Spinner-tempo">tempo RW</h4>
-
-<p>Defines the speed of the animation. It sets the interval in seconds between each frame. Its default value is <var>0.25</var> seconds.</p>
 </section>
 
 <section>
@@ -1748,7 +1748,7 @@ term.restore_cursor()
 <pre><code>
 import eva, random, time
 
-nested1 = eva.Spinner(message='my turn', tempo=eva.SECOND / 10)
+nested1 = eva.Spinner(message='my turn', interval=eva.SECOND / 10)
 
 nested2 = eva.Spinner()
 nested2.colors = (0, 1, 15)

@@ -1,4 +1,4 @@
-VERSION = '0.261124'
+VERSION = '0.261125'
 
 SECOND      = 1.0
 MINUTE      = SECOND * 60
@@ -1759,20 +1759,21 @@ class _metaclass_Reader(type):
     _active_readers = M.weakref.WeakSet()
     _class_lock     = M.threading.RLock()
     _eof            = False
+    _interval       = MILLISECOND * 250
     _thread         = M.threading.Thread()
-    _wait           = MILLISECOND * 250
 
 
-    def _fget_wait(cls, /):
-        return cls._wait
+    def _fget_interval(cls, /):
+        return cls._interval
 
 
-    def _fset_wait(cls, value, /):
+    def _fset_interval(cls, value, /):
         with cls._class_lock:
-            cls._wait = normalize_float(value, minimum=0.0)
+            cls._interval = normalize_float(value, minimum=0.0)
 
 
-    wait = property(fget=_fget_wait, fset=_fset_wait)
+    interval = property(fget=_fget_interval, fset=_fset_interval)
+    wait     = property(fget=_fget_interval, fset=_fset_interval) # DEPRECATED
 
 
     def _activate_reader(cls, reader, /):
@@ -1811,7 +1812,7 @@ class _metaclass_Reader(type):
 
             while cls._active_readers:
                 if cls._eof:
-                    M.time.sleep(cls.wait)
+                    M.time.sleep(cls.interval)
                 elif cls._stdin_is_ready():
                     chunk = M.os.read(fd, maximum)
                     eof   = not len(chunk)
@@ -1838,7 +1839,7 @@ class _metaclass_Reader(type):
         stdin    = M.sys.__stdin__.fileno()
         rlist    = [stdin]
         empty    = []
-        readable = M.select.select(rlist, empty, empty, cls.wait)[0]
+        readable = M.select.select(rlist, empty, empty, cls.interval)[0]
 
         return bool(readable)
 
@@ -1888,7 +1889,7 @@ class Reader(metaclass=_metaclass_Reader):
         cls = self.__class__
         ret = None
 
-        self._sleeper.wait(cls.wait)
+        self._sleeper.wait(cls.interval)
 
         with self._instance_lock:
             if self._buffer:
@@ -2154,8 +2155,8 @@ class _metaclass_Spinner(type):
                            201, 165, 129,  93,  57,)
     _default_colors     = _default_colors + _default_colors[-2:0:-1]
     _default_glyphs     = ('|', '/', '—', '\\')
+    _default_interval   = MILLISECOND * 250
     _default_message    = ''
-    _default_tempo      = MILLISECOND * 250
     _hide_depth         = 0
     _template_colorful  = '\x1B[2K' + '\r\x1B[38;5;{color}m{glyph}\x1B[39m{separator}{message}\r'
     _template_colorless = '\x1B[2K' + '\r{glyph}{separator}{message}\r'
@@ -2236,7 +2237,7 @@ class _metaclass_Spinner(type):
                     if not cls._hide_depth:
                         spinner._print_frame()
 
-                cls._break_engine.wait(spinner.tempo)
+                cls._break_engine.wait(spinner.interval)
 
 
     def _enter_hide(cls, /, *, fake=False):
@@ -2311,16 +2312,16 @@ class Spinner(metaclass=_metaclass_Spinner):
         return self._glyphs
 
 
+    def _fget_interval(self, /):
+        return self._interval
+
+
     def _fget_message(self, /):
         return self._message
 
 
     def _fget_status(self, /):
         return self in self.__class__._active_spinners
-
-
-    def _fget_tempo(self, /):
-        return self._tempo
 
 
     def _fset_colors(self, value, /):
@@ -2338,6 +2339,12 @@ class Spinner(metaclass=_metaclass_Spinner):
         with self._instance_lock:
             self._animation.glyphs = M.collections.deque(value)
             self._glyphs           = tuple(value)
+
+
+    def _fset_interval(self, value, /):
+        with self._instance_lock:
+            self._interval = normalize_float(value, minimum=0.0)
+            self._ticker   = Chrono(timeout=self.interval)
 
 
     def _fset_message(self, value, /):
@@ -2360,17 +2367,12 @@ class Spinner(metaclass=_metaclass_Spinner):
             self._message           = value
 
 
-    def _fset_tempo(self, value, /):
-        with self._instance_lock:
-            self._tempo  = normalize_float(value, minimum=0.0)
-            self._ticker = Chrono(timeout=self.tempo)
-
-
-    colors  = property(fget=_fget_colors,  fset=_fset_colors)
-    glyphs  = property(fget=_fget_glyphs,  fset=_fset_glyphs)
-    message = property(fget=_fget_message, fset=_fset_message)
-    status  = property(fget=_fget_status)
-    tempo   = property(fget=_fget_tempo,   fset=_fset_tempo)
+    colors   = property(fget=_fget_colors,   fset=_fset_colors)
+    glyphs   = property(fget=_fget_glyphs,   fset=_fset_glyphs)
+    interval = property(fget=_fget_interval, fset=_fset_interval)
+    message  = property(fget=_fget_message,  fset=_fset_message)
+    status   = property(fget=_fget_status)
+    tempo    = property(fget=_fget_interval, fset=_fset_interval) # DEPRECATED
 
 
     def __enter__(self, /):
@@ -2382,7 +2384,7 @@ class Spinner(metaclass=_metaclass_Spinner):
         self.off()
 
 
-    def __init__(self, /, *, auto=False, colors=None, glyphs=None, message=None, tempo=None):
+    def __init__(self, /, *, auto=False, colors=None, glyphs=None, interval=None, message=None, tempo=None): # tempo -> DEPRECATED
         auto                = bool(auto)
         cls                 = self.__class__
         self._animation     = N()
@@ -2390,7 +2392,11 @@ class Spinner(metaclass=_metaclass_Spinner):
         self.colors         = cls._default_colors  if colors  is None else colors
         self.glyphs         = cls._default_glyphs  if glyphs  is None else glyphs
         self.message        = cls._default_message if message is None else message
-        self.tempo          = cls._default_tempo   if tempo   is None else tempo
+
+        if interval is None:
+            self.interval = cls._default_interval if tempo is None else tempo # DEPRECATED
+        else:
+            self.interval = interval
 
         if auto:
             self.on()
