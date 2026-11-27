@@ -1,4 +1,4 @@
-VERSION = '0.261125'
+VERSION = '0.261127'
 
 SECOND      = 1.0
 MINUTE      = SECOND * 60
@@ -1111,7 +1111,6 @@ class _metaclass_CPU(type):
         fname_name       = 'name'
         fstr_label       = 'temp{}_label'
         glob_fname_input = 'temp*_input'
-        glob_fname_label = 'temp*_label'
         glob_pathd_hwmon = '/sys/class/hwmon/hwmon*/'
         natural_sort     = lambda p: int(cls._regex_fname_input.search(M.os.path.basename(p)).group(1))
         purge_and_sort   = lambda l: sorted([ p for p in l if path_is_file(p, follow=False) ], key=natural_sort)
