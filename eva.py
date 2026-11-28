@@ -1,4 +1,4 @@
-VERSION = '0.261127'
+VERSION = '0.261128'
 
 SECOND      = 1.0
 MINUTE      = SECOND * 60
@@ -1096,7 +1096,6 @@ class _metaclass_CPU(type):
 
             if content is not False and content.isdigit():
                 temperature = int(content) / divisor
-                temperature = max(temperature, minimum)
 
                 temperatures.append(temperature)
 
